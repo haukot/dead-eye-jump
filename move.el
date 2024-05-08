@@ -161,44 +161,75 @@
 ;;           (setq accum-column (+ accum-column win-cols)))))))
 
 
-(defun jump-to-pixel-part ()
-  "Jump to the center of a part of the frame divided into 16 parts."
-  (interactive)
-  (let* ((key-to-part (read-char "Press one of the keys (qdrwashtfup:neoi'): "))
-         (width (frame-pixel-width))
-         (height (frame-pixel-height))
-         (part-index (key-to-part-index key-to-part))
-         (coords-x-per-part (/ width 4))
-         (coords-y-per-part (/ height 4))
-         (target-x (+ (* coords-x-per-part (/ part-index 4)) (/ coords-x-per-part 2)))
-         (target-y (+ (* coords-y-per-part (/ part-index 4)) (/ coords-y-per-part 2))))
+;; (defun jump-to-pixel-part ()
+;;   "Jump to the center of a part of the frame divided into 16 parts."
+;;   (interactive)
+;;   (let* ((key-to-part (read-char "Press one of the keys (qdrwashtfup:neoi'): "))
+;;          (width (frame-pixel-width))
+;;          (height (frame-pixel-height))
+;;          (part-index (key-to-part-index key-to-part))
+;;          (coords-x-per-part (/ width 4))
+;;          (coords-y-per-part (/ height 4))
+;;          (target-x (+ (* coords-x-per-part (/ part-index 4)) (/ coords-x-per-part 2)))
+;;          (target-y (+ (* coords-y-per-part (/ part-index 4)) (/ coords-y-per-part 2))))
 
-    (jump-to-pixel target-x target-y)
-    ))
-(defun jump-to-refined-pixel-part ()
-  "Jump to a more refined part of the frame divided initially into 16 parts, then subdivided again."
-  (interactive)
-  (let* ((first-key (read-char "Press first key (one of qdrwashtfup:neoi'): "))
-         (second-key (read-char "Press second key (one of qdrwashtfup:neoi'): "))
-         (width (frame-pixel-width))
-         (height (frame-pixel-height))
-         (first-part-index (key-to-part-index first-key))
-         (second-part-index (key-to-part-index second-key))
-         ;; Calculate the width and height of each primary part
-         (primary-x-per-part (/ width 4))
-         (primary-y-per-part (/ height 4))
-         ;; Determine the top-left corner of the first selected part
-         (base-x (* primary-x-per-part (/ first-part-index 4)))
-         (base-y (* primary-y-per-part (/ first-part-index 4)))
-         ;; Calculate the width and height of each subdivided part
-         (sub-x-per-part (/ primary-x-per-part 4))
-         (sub-y-per-part (/ primary-y-per-part 4))
-         ;; Calculate the center of the subdivided part
-         (target-x (+ base-x (* sub-x-per-part (/ second-part-index 4)) (/ sub-x-per-part 2)))
-         (target-y (+ base-y (* sub-y-per-part (/ second-part-index 4)) (/ sub-y-per-part 2))))
+;;     (jump-to-pixel target-x target-y)
+;;     ))
+;; (defun jump-to-refined-pixel-part ()
+;;   "Jump to a more refined part of the frame divided initially into 16 parts, then subdivided again."
+;;   (interactive)
+;;   (let* ((first-key (read-char "Press first key (one of qdrwashtfup:neoi'): "))
+;;          (second-key (read-char "Press second key (one of qdrwashtfup:neoi'): "))
+;;          (width (frame-pixel-width))
+;;          (height (frame-pixel-height))
+;;          (first-part-index (key-to-part-index first-key))
+;;          (second-part-index (key-to-part-index second-key))
+;;          ;; Calculate the width and height of each primary part
+;;          (primary-x-per-part (/ width 4))
+;;          (primary-y-per-part (/ height 4))
+;;          ;; Determine the top-left corner of the first selected part
+;;          (base-x (* primary-x-per-part (/ first-part-index 4)))
+;;          (base-y (* primary-y-per-part (/ first-part-index 4)))
+;;          ;; Calculate the width and height of each subdivided part
+;;          (sub-x-per-part (/ primary-x-per-part 4))
+;;          (sub-y-per-part (/ primary-y-per-part 4))
+;;          ;; Calculate the center of the subdivided part
+;;          (target-x (+ base-x (* sub-x-per-part (/ second-part-index 4)) (/ sub-x-per-part 2)))
+;;          (target-y (+ base-y (* sub-y-per-part (/ second-part-index 4)) (/ sub-y-per-part 2))))
 
-    ;; Jump to the pixel coordinates corresponding to the center of the selected subdivided part
-    (jump-to-pixel target-x target-y)))
+;;     ;; Jump to the pixel coordinates corresponding to the center of the selected subdivided part
+;;     (jump-to-pixel target-x target-y)))
+
+
+;; (avy--done)
+;; (highlight-to-pixel 100 100 ?q)
+;; (highlight-to-pixel 200 300 ?r)
+;; (highlight-to-pixel 1910 900 ?k)
+;; ;; clear overlay
+;; (remove-overlays (point-min) (point-max))
+
+;; (defun jump-to-pixel (x y)
+;;   "Jump to the nearest character at global frame pixel coordinates X and Y."
+;;   (interactive "nX pixel coordinate: \nnY pixel coordinate: ")
+;;   (setq x 60)
+;;   (setq y 982)
+;;   (setq target-window (window-at-pixel x y))
+;;   (setq window-edges (window-pixel-edges target-window))
+;;   (posn-at-x-y 60 982 target-window)
+;;   (window-body-width target-window t)
+;;   (window-body-height target-window t)
+;;   (let ((target-window (window-at-pixel x y)))
+;;     (if target-window
+;;         (let* ((window-edges (window-pixel-edges target-window))
+;;                (local-x (- x (first window-edges)))
+;;                (local-y (- y (second window-edges)))
+;;                (posn (posn-at-x-y local-x local-y target-window)))
+;;           (if posn
+;;               (progn
+;;                 (select-window target-window)
+;;                 (goto-char (posn-point posn)))
+;;             (message "No character found at these local pixel coordinates.")))
+;;       (message "No window found at these global pixel coordinates."))))
 
 (defun window-at-pixel (x y)
   "Return the window at frame pixel coordinates X and Y."
@@ -248,7 +279,6 @@
   (mapc #'delete-overlay my-avy--overlays-lead)
   (setq my-avy--overlays-lead nil))
 
-
 ;; (highlight-to-pixel 240 127 ?q)
 (defun highlight-to-pixel (x y key)
   "Highlight the character at global frame pixel coordinates X and Y with an overlay showing KEY."
@@ -263,7 +293,6 @@
                (max-pos-y (cdr (posn-x-y (posn-at-point (window-end target-window t) nil))))
                ;; может выбраться символ, которые виден наполовину, и у него будет nil?
                (max-y (if (not max-pos-y) 1 max-pos-y))
-               (xxx (message "H Value of max-x: %s" max-x))
                (xx (message "H Value of max-x: %s, max-y: %s" max-x max-y))
                (local-x (if (and (>= pos-x 0) (<= pos-x max-x))
                             pos-x
@@ -284,35 +313,6 @@
             (message "No character found at these local pixel coordinates.")))
       (message "No window found at these global pixel coordinates."))))
 
-;; (avy--done)
-;; (highlight-to-pixel 100 100 ?q)
-;; (highlight-to-pixel 200 300 ?r)
-;; (highlight-to-pixel 1910 900 ?k)
-;; ;; clear overlay
-;; (remove-overlays (point-min) (point-max))
-
-;; (defun jump-to-pixel (x y)
-;;   "Jump to the nearest character at global frame pixel coordinates X and Y."
-;;   (interactive "nX pixel coordinate: \nnY pixel coordinate: ")
-;;   (setq x 60)
-;;   (setq y 982)
-;;   (setq target-window (window-at-pixel x y))
-;;   (setq window-edges (window-pixel-edges target-window))
-;;   (posn-at-x-y 60 982 target-window)
-;;   (window-body-width target-window t)
-;;   (window-body-height target-window t)
-;;   (let ((target-window (window-at-pixel x y)))
-;;     (if target-window
-;;         (let* ((window-edges (window-pixel-edges target-window))
-;;                (local-x (- x (first window-edges)))
-;;                (local-y (- y (second window-edges)))
-;;                (posn (posn-at-x-y local-x local-y target-window)))
-;;           (if posn
-;;               (progn
-;;                 (select-window target-window)
-;;                 (goto-char (posn-point posn)))
-;;             (message "No character found at these local pixel coordinates.")))
-;;       (message "No window found at these global pixel coordinates."))))
 (defun jump-to-pixel (x y)
   "Jump to the nearest character at global frame pixel coordinates X and Y."
   (interactive)
@@ -362,7 +362,7 @@
           (center-y (+ base-y (* row y-per-part) (/ y-per-part 2))))
      (message "highlight-to-pixel %d %d %s" center-x center-y key)
      (highlight-to-pixel center-x center-y (string-to-char key)))))
-(highlight-to-pixel 60 982 "n")
+;; (highlight-to-pixel 60 982 "n")
 
 (defun highlight-refined-pixel-parts ()
   "Highlight and jump to a more refined part of the frame, divided initially into 16 parts, then subdivided again."
@@ -386,8 +386,8 @@
            (base-x (* primary-x-per-part (mod first-part-index 4)))
            (base-y (* primary-y-per-part (/ first-part-index 4)))
            ;; Calculate the width and height of each subdivided part
-           (sub-x-per-part (/ primary-x-per-part 4))
-           (sub-y-per-part (/ primary-y-per-part 4))
+           (sub-x-per-part (/ primary-x-per-part 16))
+           (sub-y-per-part (/ primary-y-per-part 16))
            (x5 (message "Value of sub-x-per-part: %d" sub-x-per-part))
            )
       (message "Done let*")
