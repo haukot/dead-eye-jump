@@ -101,6 +101,7 @@
   (my-avy--make-backgrounds (window-list))
   (action-at-pixel x y (lambda (pos target-window)
                          (with-selected-window target-window
+                           ;; TODO: это мб не надо?
                            (goto-char pos)
                            (unless (eobp)  ; Check if at end of buffer
                              (let* ((ov (make-overlay (point) (min (1+ (point)) (point-max))))
@@ -151,50 +152,76 @@
     (message "Value of primary-x-per-part: %d" primary-x-per-part)
     (message "Value of primary-y-per-part: %d" primary-y-per-part)
 
-    ;; Initial highlighting
-    (highlight-keys 0 0 primary-x-per-part primary-y-per-part keys)
+    (unwind-protect
+        (progn
+          ;; Initial highlighting
+          (highlight-keys 0 0 primary-x-per-part primary-y-per-part keys)
 
-    (let* ((first-key (read-char "Press first key (one of qdrwashtfup:neoi'): "))
-           (xxx (message "Value of first-key: %c" first-key))
-           (first-part-index (key-to-part-index first-key keys))
-           (x4 (message "Value of first-part-index: %d" first-part-index))
-           ;; Determine the top-left corner of the first selected part
-           (base-x (* primary-x-per-part (mod first-part-index 4)))
-           (base-y (* primary-y-per-part (/ first-part-index 4)))
-           ;; Calculate the width and height of each subdivided part
-           (sub-x-per-part (/ primary-x-per-part 4))
-           (sub-y-per-part (/ primary-y-per-part 4))
-           (x5 (message "Value of sub-x-per-part: %d" sub-x-per-part))
-           )
-      (message "Done let*")
-      ;; clear first overlay
-      (remove-overlays (point-min) (point-max))
+          (let* ((first-key (read-char "Press first key (one of qdrwashtfup:neoi'): "))
+                 (xxx (message "Value of first-key: %c" first-key))
+                 (first-part-index (key-to-part-index first-key keys))
+                 (x4 (message "Value of first-part-index: %d" first-part-index))
+                 ;; Determine the top-left corner of the first selected part
+                 (base-x (* primary-x-per-part (mod first-part-index 4)))
+                 (base-y (* primary-y-per-part (/ first-part-index 4)))
+                 ;; Calculate the width and height of each subdivided part
+                 (sub-x-per-part (/ primary-x-per-part 4))
+                 (sub-y-per-part (/ primary-y-per-part 4))
+                 (x5 (message "Value of sub-x-per-part: %d" sub-x-per-part))
+                 )
+            (message "Done let*")
+            ;; clear first overlay
+            (remove-overlays (point-min) (point-max))
+            (my-avy--done)
+            (message "Done overlay")
+            ;; Second highlighting
+            (message "Values before highlight: %d %d %d %d %s" base-x base-y sub-x-per-part sub-y-per-part keys)
+            (highlight-keys base-x base-y sub-x-per-part sub-y-per-part keys)
+            (message "Done hightlight")
+
+            ;; TODO: read-from-minibuffer?
+            (let* ((second-key (read-char "Press second key (one of qdrwashtfup:neoi'): "))
+                   (x (message "Value of second-key: %c" second-key))
+                   (second-part-index (key-to-part-index second-key keys))
+                   ;; Determine the top-left corner of the second selected part
+                   ;; (second-base-x (* base-x (mod second-part-index 4)))
+                   ;; (second-base-y (* base-y (/ second-part-index 4)))
+                   (second-base-x (+ base-x (* sub-x-per-part (mod second-part-index 4))))
+                   (second-base-y (+ base-y (* sub-y-per-part (/ second-part-index 4))))
+                   ;; Calculate the width and height of each subdivided part
+                   (third-x-per-part (max (/ sub-x-per-part 4) 1))
+                   (third-y-per-part (max (/ sub-y-per-part 4) 1))
+                   (xx (message "Value of second-part-index: %d" second-part-index))
+                   ;; Calculate the center of the subdivided part
+                   )
+              ;; clear second overlay
+              (my-avy--done)
+
+              (highlight-keys second-base-x second-base-y third-x-per-part third-y-per-part keys)
+
+              ;; calc third and final target
+              (let* ((third-key (read-char "Press third key (one of qdrwashtfup:neoi'): "))
+                     (x (message "Value of third-key: %c" third-key))
+                     (third-part-index (key-to-part-index third-key keys))
+                     (xx (message "Value of third-part-index: %d" third-part-index))
+                     ;; Calculate the center of the subdivided part
+                     ;; (target-x (+ second-base-x (*  (mod third-part-index 4)) (/ second-target-x 2)))
+                     ;; (target-y (+ second-base-y (* second-target-y (/ third-part-index 4)) (/ second-target-y 2))))
+                     (final-x (+ second-base-x (* third-x-per-part (mod third-part-index 4)) (/ third-x-per-part 2)))
+                     (final-y (+ second-base-y (* third-y-per-part (/ third-part-index 4)) (/ third-y-per-part 2))))
+
+                (my-avy--done)
+
+                (jump-to-pixel final-x final-y)
+                ;; Jump to the final position
+                ;; (jump-to-pixel target-x target-y)
+                )
+              )))
       (my-avy--done)
-      (message "Done overlay")
-      ;; Second highlighting
-      (message "Values before highlight: %d %d %d %d %s" base-x base-y sub-x-per-part sub-y-per-part keys)
-      (highlight-keys base-x base-y sub-x-per-part sub-y-per-part keys)
-      (message "Done hightlight")
+      )
+    ;; finally in case of error
+    ))
 
-      ;; TODO: read-from-minibuffer?
-      (let* ((second-key (read-char "Press second key (one of qdrwashtfup:neoi'): "))
-             (x (message "Value of second-key: %c" second-key))
-             (second-part-index (key-to-part-index second-key keys))
-             (xx (message "Value of second-part-index: %d" second-part-index))
-             ;; Calculate the center of the subdivided part
-             (target-x (+ base-x (* sub-x-per-part (mod second-part-index 4)) (/ sub-x-per-part 2)))
-             (target-y (+ base-y (* sub-y-per-part (/ second-part-index 4)) (/ sub-y-per-part 2))))
-        (message "Value of target-x: %d" target-x)
-        (message "Value of target-y: %d" target-y)
-        ;; clear second overlay
-        (my-avy--done)
-
-        ;; Jump to the final position
-        (jump-to-pixel target-x target-y)
-        ))))
-
-
-(setq debug-on-error t)
 
 ;;1440 762 120 63 (q d r w a s h t f u p : n e o i)
 ;;       (remove-overlays (point-min) (point-max))
@@ -210,6 +237,9 @@
 ;; (cdr (posn-x-y (posn-at-point (window-end target-window t) nil)))
 
 ;; (remove-overlays (point-min) (point-max))
+
+;; (setq debug-on-error t)
+
 (defun remove-overlays-in-all-windows ()
   "Remove all overlays in all buffers displayed in any window."
   (interactive)
