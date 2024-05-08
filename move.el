@@ -209,63 +209,77 @@
                  (>= y (nth 1 edges)) (<= y (nth 3 edges)))
             (throw 'found window))))))
 
-(defcustom avy-background nil
+(defcustom my-avy-background nil
   "When non-nil, a gray background will be added during the selection."
   :type 'boolean)
-(setq avy-background t)
+(setq my-avy-background t)
 
-(defvar avy--overlays-lead nil
+(defvar my-avy--overlays-lead nil
   "Hold overlays for leading chars.")
-(defvar avy--overlays-back nil
+(defvar my-avy--overlays-back nil
   "Hold overlays for when `avy-background' is t.")
-(defface avy-background-face
+(defface my-avy-background-face
   '((t (:foreground "gray40")))
   "Face for whole window background during selection.")
 
-(defun avy--make-backgrounds (wnd-list)
+(defun my-avy--make-backgrounds (wnd-list)
   "Create a dim background overlay for each window on WND-LIST."
-  (when avy-background
-    (setq avy--overlays-back
+  (when my-avy-background
+    (setq my-avy--overlays-back
           (mapcar (lambda (w)
                     (let ((ol (make-overlay
                                (window-start w)
                                (window-end w)
                                (window-buffer w))))
-                      (overlay-put ol 'face 'avy-background-face)
+                      (overlay-put ol 'face 'my-avy-background-face)
                       (overlay-put ol 'window w)
                       ol))
                   wnd-list))))
-(avy--make-backgrounds (window-list))
+;; (my-avy--make-backgrounds (window-list))
 
-(defun avy--done ()
+(defun my-avy--done ()
   "Clean up overlays."
-  (mapc #'delete-overlay avy--overlays-back)
-  (setq avy--overlays-back nil)
-  (avy--remove-leading-chars))
+  (mapc #'delete-overlay my-avy--overlays-back)
+  (setq my-avy--overlays-back nil)
+  (my-avy--remove-leading-chars))
 
-(defun avy--remove-leading-chars ()
+(defun my-avy--remove-leading-chars ()
   "Remove leading char overlays."
-  (mapc #'delete-overlay avy--overlays-lead)
-  (setq avy--overlays-lead nil))
+  (mapc #'delete-overlay my-avy--overlays-lead)
+  (setq my-avy--overlays-lead nil))
 
+
+;; (highlight-to-pixel 240 127 ?q)
 (defun highlight-to-pixel (x y key)
   "Highlight the character at global frame pixel coordinates X and Y with an overlay showing KEY."
-  (interactive "nX pixel coordinate: \nnY pixel coordinate: \ncKey to display: ")
-  (avy--make-backgrounds (window-list))
+  (interactive)
+  (my-avy--make-backgrounds (window-list))
   (let ((target-window (window-at-pixel x y)))
     (if target-window
         (let* ((window-edges (window-pixel-edges target-window))
-               (local-x (- x (first window-edges)))
-               (local-y (- y (second window-edges)))
+               (pos-x (- x (first window-edges)))
+               (pos-y (- y (second window-edges)))
+               (max-x (window-body-width target-window t))
+               (max-pos-y (cdr (posn-x-y (posn-at-point (window-end target-window t) nil))))
+               ;; может выбраться символ, которые виден наполовину, и у него будет nil?
+               (max-y (if (not max-pos-y) 1 max-pos-y))
+               (xxx (message "H Value of max-x: %s" max-x))
+               (xx (message "H Value of max-x: %s, max-y: %s" max-x max-y))
+               (local-x (if (and (>= pos-x 0) (<= pos-x max-x))
+                            pos-x
+                          max-x))
+               (local-y (if (and (>= pos-y 0) (<= pos-y max-y))
+                            pos-y
+                          max-y))
                (posn (posn-at-x-y local-x local-y target-window)))
           (if posn
               (with-selected-window target-window
                 (goto-char (posn-point posn))
                 (let ((ov (make-overlay (point) (1+ (point)))))
-                  (overlay-put ov 'category 'avy-myyyy)
+                  (overlay-put ov 'category 'my-avy-myyyy)
                   (overlay-put ov 'display (propertize (char-to-string key) 'face '(:foreground "red")))
                   (overlay-put ov 'help-echo "Highlighted key")
-                  (push ov avy--overlays-lead)
+                  (push ov my-avy--overlays-lead)
                   ))
             (message "No character found at these local pixel coordinates.")))
       (message "No window found at these global pixel coordinates."))))
@@ -301,24 +315,28 @@
 ;;       (message "No window found at these global pixel coordinates."))))
 (defun jump-to-pixel (x y)
   "Jump to the nearest character at global frame pixel coordinates X and Y."
-  (interactive "nX pixel coordinate: \nnY pixel coordinate: ")
+  (interactive)
   (let ((target-window (window-at-pixel x y)))
     (if target-window
         (let* ((window-edges (window-pixel-edges target-window))
                (pos-x (- x (first window-edges)))
                (pos-y (- y (second window-edges)))
-               (window-width (window-body-width target-window t))
-               (window-height (window-body-height target-window t))
-               (local-x (if (and (>= pos-x 0) (<= pos-x window-width))
+               ;; (window-width (window-body-width target-window t))
+               ;; (window-height (window-body-height target-window t))
+               ;; Т.к. самый последний символ - не обязательно самый крайний x
+               ;; TODO: не будет ли падать в каких-то случаях?
+               (max-x (window-body-width target-window t))
+               (max-pos-y (cdr (posn-x-y (posn-at-point (window-end target-window t) nil))))
+               ;; может выбраться символ, которые виден наполовину, и у него будет nil?
+               (max-y (if (not max-pos-y) 1 max-pos-y))
+               (xx (message "J Value of max-x: %s, max-y: %s" max-x max-y))
+               (local-x (if (and (>= pos-x 0) (<= pos-x max-x))
                             pos-x
-                          (- window-width 1)))
-               (local-y (if (and (>= pos-y 0) (<= pos-y window-height))
+                          max-x))
+               (local-y (if (and (>= pos-y 0) (<= pos-y max-y))
                             pos-y
-                          (- window-height 1)))
-               (posn (if (and (>= local-x 0) (<= local-x window-width)
-                             (>= local-y 0) (<= local-y window-height))
-                         (posn-at-x-y local-x local-y target-window)
-                       (posn-at-x-y 0 0 target-window))))
+                          max-y))
+               (posn (posn-at-x-y local-x local-y target-window)))
           (if posn
               (progn
                 (select-window target-window)
@@ -375,7 +393,7 @@
       (message "Done let*")
       ;; clear first overlay
       (remove-overlays (point-min) (point-max))
-      (avy--done)
+      (my-avy--done)
       (message "Done overlay")
       ;; Second highlighting
       (message "Values before highlight: %d %d %d %d %s" base-x base-y sub-x-per-part sub-y-per-part keys)
@@ -392,7 +410,7 @@
         (message "Value of target-x: %d" target-x)
         (message "Value of target-y: %d" target-y)
         ;; clear second overlay
-        (avy--done)
+        (my-avy--done)
 
         ;; Jump to the final position
         (jump-to-pixel target-x target-y)))))
@@ -408,6 +426,10 @@
 (highlight-keys 0 0 480 254 keys)
 (highlight-keys 0 0 120 63 keys)
 (jump-to-pixel 60 982)
+(jump-to-pixel 100 560)
+
+;; (car (posn-x-y (posn-at-point (window-end target-window t) nil)))
+;; (cdr (posn-x-y (posn-at-point (window-end target-window t) nil)))
 
 (remove-overlays (point-min) (point-max))
 (defun remove-overlays-in-all-windows ()
