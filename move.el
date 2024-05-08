@@ -46,6 +46,57 @@
   (mapc #'delete-overlay my-avy--overlays-lead)
   (setq my-avy--overlays-lead nil))
 
+(defun count-visible-lines ()
+  "Count the number of visible lines in the current window."
+  (interactive)
+  (save-excursion
+    (let ((count 0))
+      (goto-char (window-start))
+      ;; Loop from the first visible line to the last visible line,
+      ;; incrementing count for each line moved.
+      (while (and (pos-visible-in-window-p (point) (selected-window))
+                  (<= (point) (window-end)))
+        (unless (eobp)  ; Check if end of buffer is reached
+          (forward-line 1)
+          (setq count (1+ count))))
+      (message "Number of visible lines: %d" count)
+      count)))
+
+(defun pixel-coordinates-of-last-visible-line ()
+  "Return the pixel coordinates of the last visible line in the current window."
+  (interactive)
+  (save-excursion
+    (goto-char (window-start))
+    (let ((last-pos (window-start)))  ; Initialize with the first visible position
+      ;; Move down line by line until we reach the window end or are no longer visible
+      (while (and (pos-visible-in-window-p (point) (selected-window) t)
+                  (not (eobp)))
+        (setq last-pos (point))
+        (forward-line 1))
+      ;; Get pixel coordinates of the last visible line
+      (goto-char last-pos)
+      (let* ((posn (posn-at-point last-pos))
+             (x (car (posn-x-y posn)))
+             (y (cdr (posn-x-y posn))))
+        ;; (message "Pixel coordinates: X=%d, Y=%d" x y)
+        (list x y)))))
+;; y pos
+;; (car (last (pixel-coordinates-of-last-visible-line)))
+
+;; (defun pixel-coordinates-of-last-visible-char ()
+;;   "Return the pixel coordinates of the last visible character in the current window."
+;;   (interactive)
+;;   (let* ((pos (window-end target-window t))  ; Get last visible character position, update to very end.
+;;          (posn (posn-at-point pos nil)))  ; Get position data at this point.
+;;     (if posn
+;;         (let ((x (car (posn-x-y posn)))
+;;               (y (cdr (posn-x-y posn))))
+;;           (message "Pixel coordinates of last visible character: X=%d, Y=%d" x y)
+;;           (list x y))
+;;       (message "No visible character at the end of the window found."))))
+;; (pixel-coordinates-of-last-visible-char)
+;; (count-lines (point-min) (point-max))
+
 ;; (highlight-to-pixel 240 127 ?q)
 (defun action-at-pixel (x y fun)
   "Make an action at the nearest character at global frame pixel coordinates X and Y."
@@ -60,9 +111,10 @@
                ;; Т.к. самый последний символ - не обязательно самый крайний x
                ;; TODO: не будет ли падать в каких-то случаях?
                (max-x (window-body-width target-window t))
-               (max-pos-y (cdr (posn-x-y (posn-at-point (window-end target-window t) nil))))
+               ;; (max-y (cdr (last(posn-x-y (posn-at-point (window-end target-window t) nil)))))
                ;; может выбраться символ, которые виден наполовину, и у него будет nil?
-               (max-y (if (not max-pos-y) 1 max-pos-y))
+               ;; (max-y (if (not max-pos-y) 1 max-pos-y))
+               (max-y (car (last (pixel-coordinates-of-last-visible-line))))
                (xx (message "J Value of max-x: %s, max-y: %s" max-x max-y))
                (local-x (if (and (>= pos-x 0) (<= pos-x max-x))
                             pos-x
@@ -164,6 +216,7 @@
       (highlight-keys base-x base-y sub-x-per-part sub-y-per-part keys)
       (message "Done hightlight")
 
+      ;; TODO: read-from-minibuffer?
       (let* ((second-key (read-char "Press second key (one of qdrwashtfup:neoi'): "))
              (x (message "Value of second-key: %c" second-key))
              (second-part-index (key-to-part-index second-key keys))
