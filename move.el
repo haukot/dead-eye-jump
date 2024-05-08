@@ -83,6 +83,42 @@
                            (select-window target-window)
                            (goto-char pos))))
 
+;; (defun highlight-to-pixel (x y key)
+;;   "Highlight the character at global frame pixel coordinates X and Y with an overlay showing KEY."
+;;   (interactive)
+;;   (my-avy--make-backgrounds (window-list))
+;;   (action-at-pixel x y (lambda (pos target-window)
+;;                          (with-selected-window target-window
+;;                            (goto-char pos)
+;;                            (let ((ov (make-overlay (point) (1+ (point)))))
+;;                              (overlay-put ov 'category 'my-avy-myyyy)
+;;                              (overlay-put ov 'display (propertize (char-to-string key) 'face '(:foreground "red")))
+;;                              (overlay-put ov 'help-echo "Highlighted key")
+;;                              (push ov my-avy--overlays-lead)
+;;                              )))))
+
+;; (defun highlight-to-pixel (x y key)
+;;   "Highlight the character at global frame pixel coordinates X and Y with an overlay showing KEY."
+;;   (interactive)
+;;   (my-avy--make-backgrounds (window-list))
+;;   (action-at-pixel x y (lambda (pos target-window)
+;;                          (with-selected-window target-window
+;;                            (goto-char pos)
+;;                            (let* ((ov (make-overlay (point) (1+ (point))))
+;;                                   (char-at-pos (buffer-substring-no-properties (point) (1+ (point))))
+;;                                   (display-string (cond
+;;                                                    ((string-equal char-at-pos "\t")
+;;                                                     (concat (make-string 1 key) (make-string (1- tab-width) ? )))
+;;                                                    ((string-equal char-at-pos "\n")
+;;                                                     (concat (make-string 1 key) "\n"))
+;;                                                    (t
+;;                                                     (concat (make-string 1 key)
+;;                                                             (make-string (max 0 (1- (string-width char-at-pos))) ? ))))))
+;;                              (overlay-put ov 'category 'my-avy-myyyy)
+;;                              (overlay-put ov 'display (propertize display-string 'face '(:foreground "red")))
+;;                              (overlay-put ov 'help-echo "Highlighted key")
+;;                              (push ov my-avy--overlays-lead))))))
+
 (defun highlight-to-pixel (x y key)
   "Highlight the character at global frame pixel coordinates X and Y with an overlay showing KEY."
   (interactive)
@@ -90,12 +126,23 @@
   (action-at-pixel x y (lambda (pos target-window)
                          (with-selected-window target-window
                            (goto-char pos)
-                           (let ((ov (make-overlay (point) (1+ (point)))))
-                             (overlay-put ov 'category 'my-avy-myyyy)
-                             (overlay-put ov 'display (propertize (char-to-string key) 'face '(:foreground "red")))
-                             (overlay-put ov 'help-echo "Highlighted key")
-                             (push ov my-avy--overlays-lead)
-                             )))))
+                           (unless (eobp)  ; Check if at end of buffer
+                             (let* ((ov (make-overlay (point) (min (1+ (point)) (point-max))))
+                                    (char-at-pos (if (eobp) " "  ; Use space if at end of buffer
+                                                   (buffer-substring-no-properties (point) (1+ (point)))))
+                                    (display-string (cond
+                                                     ;; from https://github.com/winterTTr/ace-jump-mode/blob/master/ace-jump-mode.el#L513
+                                                     ((string-equal char-at-pos "\t")
+                                                      (concat (make-string 1 key) (make-string (1- tab-width) ? )))
+                                                     ((string-equal char-at-pos "\n")
+                                                      (concat (make-string 1 key) "\n"))
+                                                     (t
+                                                      (concat (make-string 1 key)
+                                                              (make-string (max 0 (1- (string-width char-at-pos))) ? ))))))
+                               (overlay-put ov 'category 'my-avy-myyyy)
+                               (overlay-put ov 'display (propertize display-string 'face '(:foreground "red")))
+                               (overlay-put ov 'help-echo "Highlighted key")
+                               (push ov my-avy--overlays-lead)))))))
 
 ;; (defun jump-to-pixel (x y)
 ;;   "Jump to the nearest character at global frame pixel coordinates X and Y."
