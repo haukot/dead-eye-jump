@@ -83,42 +83,6 @@
                            (select-window target-window)
                            (goto-char pos))))
 
-;; (defun highlight-to-pixel (x y key)
-;;   "Highlight the character at global frame pixel coordinates X and Y with an overlay showing KEY."
-;;   (interactive)
-;;   (my-avy--make-backgrounds (window-list))
-;;   (action-at-pixel x y (lambda (pos target-window)
-;;                          (with-selected-window target-window
-;;                            (goto-char pos)
-;;                            (let ((ov (make-overlay (point) (1+ (point)))))
-;;                              (overlay-put ov 'category 'my-avy-myyyy)
-;;                              (overlay-put ov 'display (propertize (char-to-string key) 'face '(:foreground "red")))
-;;                              (overlay-put ov 'help-echo "Highlighted key")
-;;                              (push ov my-avy--overlays-lead)
-;;                              )))))
-
-;; (defun highlight-to-pixel (x y key)
-;;   "Highlight the character at global frame pixel coordinates X and Y with an overlay showing KEY."
-;;   (interactive)
-;;   (my-avy--make-backgrounds (window-list))
-;;   (action-at-pixel x y (lambda (pos target-window)
-;;                          (with-selected-window target-window
-;;                            (goto-char pos)
-;;                            (let* ((ov (make-overlay (point) (1+ (point))))
-;;                                   (char-at-pos (buffer-substring-no-properties (point) (1+ (point))))
-;;                                   (display-string (cond
-;;                                                    ((string-equal char-at-pos "\t")
-;;                                                     (concat (make-string 1 key) (make-string (1- tab-width) ? )))
-;;                                                    ((string-equal char-at-pos "\n")
-;;                                                     (concat (make-string 1 key) "\n"))
-;;                                                    (t
-;;                                                     (concat (make-string 1 key)
-;;                                                             (make-string (max 0 (1- (string-width char-at-pos))) ? ))))))
-;;                              (overlay-put ov 'category 'my-avy-myyyy)
-;;                              (overlay-put ov 'display (propertize display-string 'face '(:foreground "red")))
-;;                              (overlay-put ov 'help-echo "Highlighted key")
-;;                              (push ov my-avy--overlays-lead))))))
-
 (defun highlight-to-pixel (x y key)
   "Highlight the character at global frame pixel coordinates X and Y with an overlay showing KEY."
   (interactive)
@@ -143,37 +107,6 @@
                                (overlay-put ov 'display (propertize display-string 'face '(:foreground "red")))
                                (overlay-put ov 'help-echo "Highlighted key")
                                (push ov my-avy--overlays-lead)))))))
-
-;; (defun jump-to-pixel (x y)
-;;   "Jump to the nearest character at global frame pixel coordinates X and Y."
-;;   (interactive)
-;;   (let ((target-window (window-at-pixel x y)))
-;;     (if target-window
-;;         (let* ((window-edges (window-pixel-edges target-window))
-;;                (pos-x (- x (first window-edges)))
-;;                (pos-y (- y (second window-edges)))
-;;                ;; (window-width (window-body-width target-window t))
-;;                ;; (window-height (window-body-height target-window t))
-;;                ;; Т.к. самый последний символ - не обязательно самый крайний x
-;;                ;; TODO: не будет ли падать в каких-то случаях?
-;;                (max-x (window-body-width target-window t))
-;;                (max-pos-y (cdr (posn-x-y (posn-at-point (window-end target-window t) nil))))
-;;                ;; может выбраться символ, которые виден наполовину, и у него будет nil?
-;;                (max-y (if (not max-pos-y) 1 max-pos-y))
-;;                (xx (message "J Value of max-x: %s, max-y: %s" max-x max-y))
-;;                (local-x (if (and (>= pos-x 0) (<= pos-x max-x))
-;;                             pos-x
-;;                           max-x))
-;;                (local-y (if (and (>= pos-y 0) (<= pos-y max-y))
-;;                             pos-y
-;;                           max-y))
-;;                (posn (posn-at-x-y local-x local-y target-window)))
-;;           (if posn
-;;               (progn
-;;                 (select-window target-window)
-;;                 (goto-char (posn-point posn)))
-;;             (message "No character found at these local pixel coordinates.")))
-;;       (message "No window found at these global pixel coordinates."))))
 
 (defun key-to-part-index (key keys)
   "Convert a KEY to a corresponding part index using KEYS array."
