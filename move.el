@@ -1,3 +1,8 @@
+;; https://emacs.stackexchange.com/questions/14920/how-to-determine-the-line-number-of-the-first-visible-line-of-a-window
+;; https://emacs.stackexchange.com/questions/10763/how-to-update-window-start-without-calling-redisplay/10768#10768
+;; https://stackoverflow.com/questions/23923371/emacs-calculating-new-window-start-end-without-redisplay/24216247#24216247
+;; https://emacs.stackexchange.com/questions/3821/a-faster-method-to-obtain-line-number-at-pos-in-large-buffers
+
 (defun window-at-pixel (x y)
   "Return the window at frame pixel coordinates X and Y."
   (catch 'found
@@ -19,6 +24,8 @@
 (defface my-avy-background-face
   '((t (:foreground "gray40")))
   "Face for whole window background during selection.")
+(defvar my-avy--window-counts nil
+  "Hold the number of visible lines for each window.")
 
 (defun my-avy--make-backgrounds (wnd-list)
   "Create a dim background overlay for each window on WND-LIST."
@@ -39,7 +46,8 @@
   "Clean up overlays."
   (mapc #'delete-overlay my-avy--overlays-back)
   (setq my-avy--overlays-back nil)
-  (my-avy--remove-leading-chars))
+  (my-avy--remove-leading-chars)
+  )
 
 (defun my-avy--remove-leading-chars ()
   "Remove leading char overlays."
@@ -61,6 +69,33 @@
           (setq count (1+ count))))
       (message "Number of visible lines: %d" count)
       count)))
+
+(setq test-window (selected-window))
+(cdr (last(posn-x-y (posn-at-point (window-end test-window nil) nil))))
+
+;; более быстрая функция типо, плюс в хеш сохраняю
+(defun count-visible-lines-all-windows ()
+  "Count visible lines for all open windows and return an association list of window-line counts."
+  (interactive)
+  (let ((windows-lines-count '()))
+    ;; Iterate over all windows in all frames
+    (walk-windows (lambda (w)
+                    ;; For each window, calculate the number of visible lines
+                    (let (
+                          (max-y (cdr (last(posn-x-y (posn-at-point (window-end w nil) nil)))))
+                          ;; (start-line (line-number-at-pos (window-start w)))
+                          ;; (end-line (line-number-at-pos (window-end w nil)))
+                          ;; (cons w (- end-line start-line 1)))
+                          )
+                      ;; Create a cons cell (window . line-count) and push to the list
+                      (push (cons w max-y)  windows-lines-count)))
+                  nil 'visible)  ; 'visible to include only visible frames
+    ;; Optionally, print the result if called interactively
+    (when (called-interactively-p 'interactive)
+      (dolist (pair windows-lines-count)
+        (message "Window: %s, Visible Lines: %d" (car pair) (cdr pair))))
+    ;; Return the association list
+    windows-lines-count))
 
 (defun pixel-coordinates-of-last-visible-line ()
   "Return the pixel coordinates of the last visible line in the current window."
@@ -114,7 +149,17 @@
                ;; (max-y (cdr (last(posn-x-y (posn-at-point (window-end target-window t) nil)))))
                ;; может выбраться символ, которые виден наполовину, и у него будет nil?
                ;; (max-y (if (not max-pos-y) 1 max-pos-y))
-               (max-y (car (last (pixel-coordinates-of-last-visible-line))))
+
+               ;; (max-y (car (last (pixel-coordinates-of-last-visible-line))))
+               (max-y (- (window-body-height target-window t)
+                         (window-mode-line-height target-window)
+                         (window-header-line-height target-window)
+                         (window-tab-line-height target-window)
+                         ))
+
+               ;; use lines count from my-avy--window-counts
+               ;; (max-y (window-text-height target-window))
+               ;; (max-y (cdr (assoc target-window my-avy--window-counts)))
                (xx (message "J Value of max-x: %s, max-y: %s" max-x max-y))
                (local-x (if (and (>= pos-x 0) (<= pos-x max-x))
                             pos-x
@@ -191,6 +236,10 @@
     (message "Value of primary-x-per-part: %d" primary-x-per-part)
     (message "Value of primary-y-per-part: %d" primary-y-per-part)
 
+    ;; используется для хайлайта
+    (setq my-avy--window-counts (count-visible-lines-all-windows))
+    (message "Value of my-avy--window-counts: %s" my-avy--window-counts)
+
     ;; Initial highlighting
     (highlight-keys 0 0 primary-x-per-part primary-y-per-part keys)
 
@@ -202,8 +251,8 @@
            (base-x (* primary-x-per-part (mod first-part-index 4)))
            (base-y (* primary-y-per-part (/ first-part-index 4)))
            ;; Calculate the width and height of each subdivided part
-           (sub-x-per-part (/ primary-x-per-part 16))
-           (sub-y-per-part (/ primary-y-per-part 16))
+           (sub-x-per-part (/ primary-x-per-part 4))
+           (sub-y-per-part (/ primary-y-per-part 4))
            (x5 (message "Value of sub-x-per-part: %d" sub-x-per-part))
            )
       (message "Done let*")
@@ -230,7 +279,10 @@
         (my-avy--done)
 
         ;; Jump to the final position
-        (jump-to-pixel target-x target-y)))))
+        (jump-to-pixel target-x target-y)
+
+        (setq my-avy--window-counts nil)
+        ))))
 
 
 (setq debug-on-error t)
@@ -239,16 +291,16 @@
 ;;       (remove-overlays (point-min) (point-max))
 ;;       (avy--done)
 
-(setq keys '("q" "d" "r" "w" "a" "s" "h" "t" "f" "u" "p" ":" "n" "e" "o" "i"))
-(highlight-keys 0 0 480 254 keys)
-(highlight-keys 0 0 120 63 keys)
-(jump-to-pixel 60 982)
-(jump-to-pixel 100 560)
+;; (setq keys '("q" "d" "r" "w" "a" "s" "h" "t" "f" "u" "p" ":" "n" "e" "o" "i"))
+;; (highlight-keys 0 0 480 254 keys)
+;; (highlight-keys 0 0 120 63 keys)
+;; (jump-to-pixel 60 982)
+;; (jump-to-pixel 100 560)
 
 ;; (car (posn-x-y (posn-at-point (window-end target-window t) nil)))
 ;; (cdr (posn-x-y (posn-at-point (window-end target-window t) nil)))
 
-(remove-overlays (point-min) (point-max))
+;; (remove-overlays (point-min) (point-max))
 (defun remove-overlays-in-all-windows ()
   "Remove all overlays in all buffers displayed in any window."
   (interactive)
