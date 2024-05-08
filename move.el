@@ -24,8 +24,6 @@
 (defface my-avy-background-face
   '((t (:foreground "gray40")))
   "Face for whole window background during selection.")
-(defvar my-avy--window-counts nil
-  "Hold the number of visible lines for each window.")
 
 (defun my-avy--make-backgrounds (wnd-list)
   "Create a dim background overlay for each window on WND-LIST."
@@ -54,85 +52,6 @@
   (mapc #'delete-overlay my-avy--overlays-lead)
   (setq my-avy--overlays-lead nil))
 
-(defun count-visible-lines ()
-  "Count the number of visible lines in the current window."
-  (interactive)
-  (save-excursion
-    (let ((count 0))
-      (goto-char (window-start))
-      ;; Loop from the first visible line to the last visible line,
-      ;; incrementing count for each line moved.
-      (while (and (pos-visible-in-window-p (point) (selected-window))
-                  (<= (point) (window-end)))
-        (unless (eobp)  ; Check if end of buffer is reached
-          (forward-line 1)
-          (setq count (1+ count))))
-      (message "Number of visible lines: %d" count)
-      count)))
-
-(setq test-window (selected-window))
-(cdr (last(posn-x-y (posn-at-point (window-end test-window nil) nil))))
-
-;; более быстрая функция типо, плюс в хеш сохраняю
-(defun count-visible-lines-all-windows ()
-  "Count visible lines for all open windows and return an association list of window-line counts."
-  (interactive)
-  (let ((windows-lines-count '()))
-    ;; Iterate over all windows in all frames
-    (walk-windows (lambda (w)
-                    ;; For each window, calculate the number of visible lines
-                    (let (
-                          (max-y (cdr (last(posn-x-y (posn-at-point (window-end w nil) nil)))))
-                          ;; (start-line (line-number-at-pos (window-start w)))
-                          ;; (end-line (line-number-at-pos (window-end w nil)))
-                          ;; (cons w (- end-line start-line 1)))
-                          )
-                      ;; Create a cons cell (window . line-count) and push to the list
-                      (push (cons w max-y)  windows-lines-count)))
-                  nil 'visible)  ; 'visible to include only visible frames
-    ;; Optionally, print the result if called interactively
-    (when (called-interactively-p 'interactive)
-      (dolist (pair windows-lines-count)
-        (message "Window: %s, Visible Lines: %d" (car pair) (cdr pair))))
-    ;; Return the association list
-    windows-lines-count))
-
-(defun pixel-coordinates-of-last-visible-line ()
-  "Return the pixel coordinates of the last visible line in the current window."
-  (interactive)
-  (save-excursion
-    (goto-char (window-start))
-    (let ((last-pos (window-start)))  ; Initialize with the first visible position
-      ;; Move down line by line until we reach the window end or are no longer visible
-      (while (and (pos-visible-in-window-p (point) (selected-window) t)
-                  (not (eobp)))
-        (setq last-pos (point))
-        (forward-line 1))
-      ;; Get pixel coordinates of the last visible line
-      (goto-char last-pos)
-      (let* ((posn (posn-at-point last-pos))
-             (x (car (posn-x-y posn)))
-             (y (cdr (posn-x-y posn))))
-        ;; (message "Pixel coordinates: X=%d, Y=%d" x y)
-        (list x y)))))
-;; y pos
-;; (car (last (pixel-coordinates-of-last-visible-line)))
-
-;; (defun pixel-coordinates-of-last-visible-char ()
-;;   "Return the pixel coordinates of the last visible character in the current window."
-;;   (interactive)
-;;   (let* ((pos (window-end target-window t))  ; Get last visible character position, update to very end.
-;;          (posn (posn-at-point pos nil)))  ; Get position data at this point.
-;;     (if posn
-;;         (let ((x (car (posn-x-y posn)))
-;;               (y (cdr (posn-x-y posn))))
-;;           (message "Pixel coordinates of last visible character: X=%d, Y=%d" x y)
-;;           (list x y))
-;;       (message "No visible character at the end of the window found."))))
-;; (pixel-coordinates-of-last-visible-char)
-;; (count-lines (point-min) (point-max))
-
-;; (highlight-to-pixel 240 127 ?q)
 (defun action-at-pixel (x y fun)
   "Make an action at the nearest character at global frame pixel coordinates X and Y."
   ;; (interactive)
@@ -150,16 +69,12 @@
                ;; может выбраться символ, которые виден наполовину, и у него будет nil?
                ;; (max-y (if (not max-pos-y) 1 max-pos-y))
 
-               ;; (max-y (car (last (pixel-coordinates-of-last-visible-line))))
                (max-y (- (window-body-height target-window t)
                          (window-mode-line-height target-window)
                          (window-header-line-height target-window)
                          (window-tab-line-height target-window)
                          ))
 
-               ;; use lines count from my-avy--window-counts
-               ;; (max-y (window-text-height target-window))
-               ;; (max-y (cdr (assoc target-window my-avy--window-counts)))
                (xx (message "J Value of max-x: %s, max-y: %s" max-x max-y))
                (local-x (if (and (>= pos-x 0) (<= pos-x max-x))
                             pos-x
@@ -236,10 +151,6 @@
     (message "Value of primary-x-per-part: %d" primary-x-per-part)
     (message "Value of primary-y-per-part: %d" primary-y-per-part)
 
-    ;; используется для хайлайта
-    (setq my-avy--window-counts (count-visible-lines-all-windows))
-    (message "Value of my-avy--window-counts: %s" my-avy--window-counts)
-
     ;; Initial highlighting
     (highlight-keys 0 0 primary-x-per-part primary-y-per-part keys)
 
@@ -280,8 +191,6 @@
 
         ;; Jump to the final position
         (jump-to-pixel target-x target-y)
-
-        (setq my-avy--window-counts nil)
         ))))
 
 
