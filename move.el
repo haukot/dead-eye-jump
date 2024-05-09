@@ -15,45 +15,45 @@
                  (>= y (nth 1 edges)) (<= y (nth 3 edges)))
             (throw 'found window))))))
 
-(defcustom my-avy-background nil
+(defcustom dead-eye-jump-background nil
   "When non-nil, a gray background will be added during the selection."
   :type 'boolean)
-(setq my-avy-background t)
+(setq dead-eye-jump-background t)
 
-(defvar my-avy--overlays-lead nil
+(defvar dead-eye-jump--overlays-lead nil
   "Hold overlays for leading chars.")
-(defvar my-avy--overlays-back nil
+(defvar dead-eye-jump--overlays-back nil
   "Hold overlays for when `avy-background' is t.")
-(defface my-avy-background-face
+(defface dead-eye-jump-background-face
   '((t (:foreground "gray40")))
   "Face for whole window background during selection.")
 
-(defun my-avy--make-backgrounds (wnd-list)
+(defun dead-eye-jump--make-backgrounds (wnd-list)
   "Create a dim background overlay for each window on WND-LIST."
-  (when my-avy-background
-    (setq my-avy--overlays-back
+  (when dead-eye-jump-background
+    (setq dead-eye-jump--overlays-back
           (mapcar (lambda (w)
                     (let ((ol (make-overlay
                                (window-start w)
                                (window-end w)
                                (window-buffer w))))
-                      (overlay-put ol 'face 'my-avy-background-face)
+                      (overlay-put ol 'face 'dead-eye-jump-background-face)
                       (overlay-put ol 'window w)
                       ol))
                   wnd-list))))
-;; (my-avy--make-backgrounds (window-list))
+;; (dead-eye-jump--make-backgrounds (window-list))
 
-(defun my-avy--done ()
+(defun dead-eye-jump--done ()
   "Clean up overlays."
-  (mapc #'delete-overlay my-avy--overlays-back)
-  (setq my-avy--overlays-back nil)
-  (my-avy--remove-leading-chars)
+  (mapc #'delete-overlay dead-eye-jump--overlays-back)
+  (setq dead-eye-jump--overlays-back nil)
+  (dead-eye-jump--remove-leading-chars)
   )
 
-(defun my-avy--remove-leading-chars ()
+(defun dead-eye-jump--remove-leading-chars ()
   "Remove leading char overlays."
-  (mapc #'delete-overlay my-avy--overlays-lead)
-  (setq my-avy--overlays-lead nil))
+  (mapc #'delete-overlay dead-eye-jump--overlays-lead)
+  (setq dead-eye-jump--overlays-lead nil))
 
 (defun action-at-pixel (x y fun)
   "Make an action at the nearest character at global frame pixel coordinates X and Y."
@@ -101,7 +101,7 @@
 (defun highlight-to-pixel (x y key)
   "Highlight the character at global frame pixel coordinates X and Y with an overlay showing KEY."
   (interactive)
-  (my-avy--make-backgrounds (window-list))
+  (dead-eye-jump--make-backgrounds (window-list))
   (action-at-pixel x y (lambda (pos target-window)
                          (with-selected-window target-window
                            ;; TODO: это мб не надо?
@@ -120,10 +120,10 @@
                                                      (t
                                                       (concat (make-string 1 key)
                                                               (make-string (max 0 (1- (string-width char-at-pos))) ? ))))))
-                               (overlay-put ov 'category 'my-avy-myyyy)
+                               (overlay-put ov 'category 'dead-eye-jump-myyyy)
                                (overlay-put ov 'display (propertize display-string 'face '(:foreground "red")))
                                (overlay-put ov 'help-echo "Highlighted key")
-                               (push ov my-avy--overlays-lead)))))))
+                               (push ov dead-eye-jump--overlays-lead)))))))
 
 (defun key-to-part-index (key keys)
   "Convert a KEY to a corresponding part index using KEYS array."
@@ -145,7 +145,7 @@
      (highlight-to-pixel center-x center-y (string-to-char key)))))
 ;; (highlight-to-pixel 60 982 "n")
 
-(defun highlight-refined-pixel-parts ()
+(defun dead-eye-jump ()
   "Highlight and jump to a more refined part of the frame, divided initially into 16 parts, then subdivided again."
   (interactive)
   (let* ((keys '("q" "d" "r" "w" "a" "s" "h" "t" "f" "u" "p" ":" "n" "e" "o" "i"))
@@ -176,7 +176,7 @@
             (message "Done let*")
             ;; clear first overlay
             (remove-overlays (point-min) (point-max))
-            (my-avy--done)
+            (dead-eye-jump--done)
             (message "Done overlay")
             ;; Second highlighting
             (message "Values before highlight: %d %d %d %d %s" base-x base-y sub-x-per-part sub-y-per-part keys)
@@ -199,7 +199,7 @@
                    ;; Calculate the center of the subdivided part
                    )
               ;; clear second overlay
-              (my-avy--done)
+              (dead-eye-jump--done)
 
               (highlight-keys second-base-x second-base-y third-x-per-part third-y-per-part keys)
 
@@ -214,14 +214,14 @@
                      (final-x (+ second-base-x (* third-x-per-part (mod third-part-index 4)) (/ third-x-per-part 2)))
                      (final-y (+ second-base-y (* third-y-per-part (/ third-part-index 4)) (/ third-y-per-part 2))))
 
-                (my-avy--done)
+                (dead-eye-jump--done)
 
                 (jump-to-pixel final-x final-y)
                 ;; Jump to the final position
                 ;; (jump-to-pixel target-x target-y)
                 )
               )))
-      (my-avy--done)
+      (dead-eye-jump--done)
       )
     ;; finally in case of error
     ))
@@ -251,5 +251,5 @@
                   (with-selected-window window
                     (remove-overlays (point-min) (point-max))))
                 nil t))
-(remove-overlays-in-all-windows)
-(global-set-key (kbd "C-c j") 'highlight-refined-pixel-parts)
+;; (remove-overlays-in-all-windows)
+(global-set-key (kbd "C-c j") 'dead-eye-jump)

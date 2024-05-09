@@ -8,7 +8,7 @@ And in 3 keys you could move(almost exactly) where you want on the screen.
 
 Add to config
 ```eslisp
-(global-set-key (kbd "C-c j") 'highlight-refined-pixel-parts)
+(global-set-key (kbd "C-c j") 'dead-eye-jump)
 ```
 
 `C+c j <char> <char> <char>`
