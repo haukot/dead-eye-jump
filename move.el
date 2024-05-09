@@ -22,7 +22,18 @@
   "Keys to use for jump"
   :type 'list)
 ;; Workman layout keys, could be querty
-(setq dead-eye-jump-keys '("q" "d" "r" "w" "a" "s" "h" "t" "f" "u" "p" ":" "n" "e" "o" "i"))
+;; (setq dead-eye-jump-keys '("q" "d" "r" "w" "a" "s" "h" "t" "f" "u" "p" ":" "n" "e" "o" "i"))
+
+
+;; (setq dead-eye-jump-keys '("q" "d"  "r" "w"
+;;                            "a" "s"  "h" "t"
+;;                            "f" "u"  "p" ":"
+;;                            "n" "e"  "o" "i"))
+
+(setq dead-eye-jump-keys '("q" "d"  "f" "u"
+                           "r" "w"  "p" ":"
+                           "a" "s"  "n" "e"
+                           "h" "t"  "o" "i"))
 
 (defcustom dead-eye-jump-repeats 3
   "Number of times to repeat the jump."
@@ -31,7 +42,7 @@
 (defvar dead-eye-jump--overlays-lead nil
   "Hold overlays for leading chars.")
 (defvar dead-eye-jump--overlays-back nil
-  "Hold overlays for when `avy-background' is t.")
+  "Hold overlays for when `dead-eye-jump-background' is t.")
 (defface dead-eye-jump-background-face
   '((t (:foreground "gray40")))
   "Face for whole window background during selection.")
@@ -49,7 +60,12 @@
                       (overlay-put ol 'window w)
                       ol))
                   wnd-list))))
-(dead-eye-jump--make-backgrounds (window-list))
+;; (dead-eye-jump--make-backgrounds (window-list))
+
+(defun dead-eye-jump--remove-leading-chars ()
+  "Remove leading char overlays."
+  (mapc #'delete-overlay dead-eye-jump--overlays-lead)
+  (setq dead-eye-jump--overlays-lead nil))
 
 (defun dead-eye-jump--done ()
   "Clean up overlays."
@@ -57,11 +73,7 @@
   (setq dead-eye-jump--overlays-back nil)
   (dead-eye-jump--remove-leading-chars)
   )
-
-(defun dead-eye-jump--remove-leading-chars ()
-  "Remove leading char overlays."
-  (mapc #'delete-overlay dead-eye-jump--overlays-lead)
-  (setq dead-eye-jump--overlays-lead nil))
+;; (dead-eye-jump--done)
 
 (defun action-at-pixel (x y fun)
   "Make an action at the nearest character at global frame pixel coordinates X and Y."
@@ -114,7 +126,7 @@
                          (with-selected-window target-window
                            (unless (eobp)  ; Check if at end of buffer
                              (let* ((ov (make-overlay pos (min (1+ pos) (point-max))))
-                                    (char-at-pos (if (eobp) " "  ; Use space if at end of buffer
+                                    (char-at-pos (if (>= (1+ pos) (point-max)) " "  ; Use space if at end of buffer
                                                    (buffer-substring-no-properties pos (1+ pos))))
                                     (display-string (cond
                                                      ;; from https://github.com/winterTTr/ace-jump-mode/blob/master/ace-jump-mode.el#L513
@@ -161,7 +173,6 @@
      (highlight-to-pixel center-x center-y (string-to-char key)))))
 ;; (highlight-to-pixel 60 982 "n")
 
-
 ;; read key
 ;; (highlight-keys 0 0 primary-x-per-part primary-y-per-part keys)
 ;; (first-key (read-char "Press first key (one of qdrwashtfup:neoi'): "))
@@ -200,8 +211,9 @@
                 ;; Jump to selected subregion
                 (let* ((center-x (+ new-base-x (/ sub-width 2)))
                        (center-y (+ new-base-y (/ sub-height 2))))
-                  (jump-to-pixel center-x center-y))
-                (dead-eye-jump--done))
+                  (jump-to-pixel center-x center-y)
+                  (dead-eye-jump--done))
+                )
             ;; Recursive call
             (dead-eye-jump new-base-x new-base-y sub-width sub-height (- level 1)))
           ))
@@ -233,4 +245,6 @@
                     (remove-overlays (point-min) (point-max))))
                 nil t))
 ;; (remove-overlays-in-all-windows)
+
+;; (setq debug-on-error t)
 (global-set-key (kbd "C-c j") 'dead-eye-jump)
