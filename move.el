@@ -120,7 +120,7 @@
                                                    (buffer-substring-no-properties (point) (1+ (point)))))
                                     (display-string (cond
                                                      ;; from https://github.com/winterTTr/ace-jump-mode/blob/master/ace-jump-mode.el#L513
-                                                     ;; чтобы оверлеи не джоинили строки
+                                                     ;; so overlay will not join strings
                                                      ((string-equal char-at-pos "\t")
                                                       (concat (make-string 1 key) (make-string (1- tab-width) ? )))
                                                      ((string-equal char-at-pos "\n")
@@ -128,9 +128,18 @@
                                                      (t
                                                       (concat (make-string 1 key)
                                                               (make-string (max 0 (1- (string-width char-at-pos))) ? ))))))
+                               ;; from https://github.com/winterTTr/ace-jump-mode/blob/master/ace-jump-mode.el#L468
+                               ;; because sometimes the different
+                               ;; window may dispaly the same buffer, in that case,
+                               ;; overlay for different window (but the same buffer)
+                               ;; will show at the same time on both window
+                               ;; So we make it only on the specific window
+                               (overlay-put ov 'window target-window)
                                (overlay-put ov 'category 'dead-eye-jump-myyyy)
                                (overlay-put ov 'display (propertize display-string 'face '(:foreground "red")))
                                (overlay-put ov 'help-echo "Highlighted key")
+                               ;; TODO: в ace-jump записывает прямо в overlay метадату о
+                               ;; позиции, и потом прыгает прямо в неё, как (overlay-put ol 'aj-data p)
                                (push ov dead-eye-jump--overlays-lead)))))))
 
 (defun key-to-part-index (key keys)
