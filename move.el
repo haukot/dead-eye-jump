@@ -15,7 +15,7 @@
                  (>= y (nth 1 edges)) (<= y (nth 3 edges)))
             (throw 'found window))))))
 
-(defcustom dead-eye-jump-background nil
+(defcustom dead-eye-jump-background t
   "When non-nil, a gray background will be added during the selection."
   :type 'boolean)
 (defcustom dead-eye-jump-keys nil
@@ -49,7 +49,7 @@
                       (overlay-put ol 'window w)
                       ol))
                   wnd-list))))
-;; (dead-eye-jump--make-backgrounds (window-list))
+(dead-eye-jump--make-backgrounds (window-list))
 
 (defun dead-eye-jump--done ()
   "Clean up overlays."
