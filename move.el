@@ -149,13 +149,14 @@
 
 ;; Function to highlight keys
 (defun highlight-keys
- (base-x base-y x-per-part y-per-part keys)
+ (base-x base-y sub-width sub-height keys)
  (dotimes (index 16)
    (let* ((key (nth index keys))
-          (row (/ index 4))
+          ;; TODO: унифицировать с jump'ом
           (col (mod index 4))
-          (center-x (+ base-x (* col x-per-part) (/ x-per-part 2)))
-          (center-y (+ base-y (* row y-per-part) (/ y-per-part 2))))
+          (row (/ index 4))
+          (center-x (+ base-x (* col sub-width) (/ sub-width 2)))
+          (center-y (+ base-y (* row sub-height) (/ sub-height 2))))
      (message "highlight-to-pixel %d %d %s" center-x center-y key)
      (highlight-to-pixel center-x center-y (string-to-char key)))))
 ;; (highlight-to-pixel 60 982 "n")
@@ -187,8 +188,10 @@
 
         (let* ((key (read-char "Press key for next region: "))
                (index (key-to-part-index key keys))
-               (new-base-x (+ base-x (* sub-width (mod index parts-per-side))))
-               (new-base-y (+ base-y (* sub-height (/ index parts-per-side))))
+               (col (mod index parts-per-side))
+               (row (/ index parts-per-side))
+               (new-base-x (+ base-x (* sub-width col)))
+               (new-base-y (+ base-y (* sub-height row)))
                )
           ;; Remove the current highlights
           (dead-eye-jump--done)
