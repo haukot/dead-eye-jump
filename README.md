@@ -6,15 +6,26 @@ And in 3 keys you could move(almost exactly) where you want on the screen.
 
 # Usage
 
+Add to config
+```eslisp
+(global-set-key (kbd "C-c j") 'highlight-refined-pixel-parts)
+```
+
 `C+c j <char> <char> <char>`
 
-Examples:
+Examples (on Workman keyboard layout, that's why its not Querty):
 
+`C+c j`
 ![1](./assets/1.png)
-![2](./assets/2.png)
-![3](./assets/3.png)
-![4](./assets/4.png)
 
+Press `a`
+![2](./assets/2.png)
+
+Press `h`
+![3](./assets/3.png)
+
+Press `u`
+![4](./assets/4.png)
 
 # TODO
 
