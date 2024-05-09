@@ -112,12 +112,10 @@
   (dead-eye-jump--make-backgrounds (window-list))
   (action-at-pixel x y (lambda (pos target-window)
                          (with-selected-window target-window
-                           ;; TODO: это мб не надо?
-                           (goto-char pos)
                            (unless (eobp)  ; Check if at end of buffer
-                             (let* ((ov (make-overlay (point) (min (1+ (point)) (point-max))))
+                             (let* ((ov (make-overlay pos (min (1+ pos) (point-max))))
                                     (char-at-pos (if (eobp) " "  ; Use space if at end of buffer
-                                                   (buffer-substring-no-properties (point) (1+ (point)))))
+                                                   (buffer-substring-no-properties pos (1+ pos))))
                                     (display-string (cond
                                                      ;; from https://github.com/winterTTr/ace-jump-mode/blob/master/ace-jump-mode.el#L513
                                                      ;; so overlay will not join strings
