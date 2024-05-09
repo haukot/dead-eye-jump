@@ -31,4 +31,4 @@ Press `u`
 
 # TODO
 
-* Work strangely on right side
+* Should not count height and width of bars, modelines and so on?
