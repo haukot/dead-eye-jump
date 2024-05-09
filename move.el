@@ -18,7 +18,15 @@
 (defcustom dead-eye-jump-background nil
   "When non-nil, a gray background will be added during the selection."
   :type 'boolean)
-(setq dead-eye-jump-background t)
+(defcustom dead-eye-jump-keys nil
+  "Keys to use for jump"
+  :type 'list)
+;; Workman layout keys, could be querty
+(setq dead-eye-jump-keys '("q" "d" "r" "w" "a" "s" "h" "t" "f" "u" "p" ":" "n" "e" "o" "i"))
+
+(defcustom dead-eye-jump-repeats 3
+  "Number of times to repeat the jump."
+  :type 'integer)
 
 (defvar dead-eye-jump--overlays-lead nil
   "Hold overlays for leading chars.")
@@ -145,87 +153,50 @@
      (highlight-to-pixel center-x center-y (string-to-char key)))))
 ;; (highlight-to-pixel 60 982 "n")
 
-(defun dead-eye-jump ()
-  "Highlight and jump to a more refined part of the frame, divided initially into 16 parts, then subdivided again."
-  (interactive)
-  (let* ((keys '("q" "d" "r" "w" "a" "s" "h" "t" "f" "u" "p" ":" "n" "e" "o" "i"))
-         (width (frame-pixel-width))
-         (height (frame-pixel-height))
-         (primary-x-per-part (/ width 4))
-         (primary-y-per-part (/ height 4)))
-    (message "Value of primary-x-per-part: %d" primary-x-per-part)
-    (message "Value of primary-y-per-part: %d" primary-y-per-part)
 
-    (unwind-protect
-        (progn
-          ;; Initial highlighting
-          (highlight-keys 0 0 primary-x-per-part primary-y-per-part keys)
+;; read key
+;; (highlight-keys 0 0 primary-x-per-part primary-y-per-part keys)
+;; (first-key (read-char "Press first key (one of qdrwashtfup:neoi'): "))
+;; (first-part-index (key-to-part-index first-key keys))
+;; (base-x (* primary-x-per-part (mod first-part-index 4)))
+;; (base-y (* primary-y-per-part (/ first-part-index 4)))
+;;                  (sub-x-per-part (/ primary-x-per-part 4))
+;;                  (sub-y-per-part (/ primary-y-per-part 4))
+;; (dead-eye-jump--done)
 
-          (let* ((first-key (read-char "Press first key (one of qdrwashtfup:neoi'): "))
-                 (xxx (message "Value of first-key: %c" first-key))
-                 (first-part-index (key-to-part-index first-key keys))
-                 (x4 (message "Value of first-part-index: %d" first-part-index))
-                 ;; Determine the top-left corner of the first selected part
-                 (base-x (* primary-x-per-part (mod first-part-index 4)))
-                 (base-y (* primary-y-per-part (/ first-part-index 4)))
-                 ;; Calculate the width and height of each subdivided part
-                 (sub-x-per-part (/ primary-x-per-part 4))
-                 (sub-y-per-part (/ primary-y-per-part 4))
-                 (x5 (message "Value of sub-x-per-part: %d" sub-x-per-part))
-                 )
-            (message "Done let*")
-            ;; clear first overlay
-            (remove-overlays (point-min) (point-max))
-            (dead-eye-jump--done)
-            (message "Done overlay")
-            ;; Second highlighting
-            (message "Values before highlight: %d %d %d %d %s" base-x base-y sub-x-per-part sub-y-per-part keys)
-            (highlight-keys base-x base-y sub-x-per-part sub-y-per-part keys)
-            (message "Done hightlight")
+(defun dead-eye-jump (base-x base-y width height level)
+  "Recursively highlight and jump to a more refined part of the frame, starting from a given subregion."
+  (interactive (list 0 0 (frame-pixel-width) (frame-pixel-height) dead-eye-jump-repeats)) ; Start with full frame and divide it into 16 parts
+  (message "dead-eye-jump %d %d %d %d %d" base-x base-y width height level)
+  (let* ((keys dead-eye-jump-keys)
+         (parts-per-side 4)
+         (sub-width (max (/ width parts-per-side) 1))
+         (sub-height (max (/ height parts-per-side) 1)))
 
-            ;; TODO: read-from-minibuffer?
-            (let* ((second-key (read-char "Press second key (one of qdrwashtfup:neoi'): "))
-                   (x (message "Value of second-key: %c" second-key))
-                   (second-part-index (key-to-part-index second-key keys))
-                   ;; Determine the top-left corner of the second selected part
-                   ;; (second-base-x (* base-x (mod second-part-index 4)))
-                   ;; (second-base-y (* base-y (/ second-part-index 4)))
-                   (second-base-x (+ base-x (* sub-x-per-part (mod second-part-index 4))))
-                   (second-base-y (+ base-y (* sub-y-per-part (/ second-part-index 4))))
-                   ;; Calculate the width and height of each subdivided part
-                   (third-x-per-part (max (/ sub-x-per-part 4) 1))
-                   (third-y-per-part (max (/ sub-y-per-part 4) 1))
-                   (xx (message "Value of second-part-index: %d" second-part-index))
-                   ;; Calculate the center of the subdivided part
-                   )
-              ;; clear second overlay
-              (dead-eye-jump--done)
+  (unwind-protect
+      (progn
+        ;; Highlight the current region subdivided by the level
+        (highlight-keys base-x base-y sub-width sub-height keys)
 
-              (highlight-keys second-base-x second-base-y third-x-per-part third-y-per-part keys)
-
-              ;; calc third and final target
-              (let* ((third-key (read-char "Press third key (one of qdrwashtfup:neoi'): "))
-                     (x (message "Value of third-key: %c" third-key))
-                     (third-part-index (key-to-part-index third-key keys))
-                     (xx (message "Value of third-part-index: %d" third-part-index))
-                     ;; Calculate the center of the subdivided part
-                     ;; (target-x (+ second-base-x (*  (mod third-part-index 4)) (/ second-target-x 2)))
-                     ;; (target-y (+ second-base-y (* second-target-y (/ third-part-index 4)) (/ second-target-y 2))))
-                     (final-x (+ second-base-x (* third-x-per-part (mod third-part-index 4)) (/ third-x-per-part 2)))
-                     (final-y (+ second-base-y (* third-y-per-part (/ third-part-index 4)) (/ third-y-per-part 2))))
-
-                (dead-eye-jump--done)
-
-                (jump-to-pixel final-x final-y)
-                ;; Jump to the final position
-                ;; (jump-to-pixel target-x target-y)
-                )
-              )))
-      (dead-eye-jump--done)
-      )
-    ;; finally in case of error
-    ))
-
+        (let* ((key (read-char "Press key for next region: "))
+               (index (key-to-part-index key keys))
+               (new-base-x (+ base-x (* sub-width (mod index parts-per-side))))
+               (new-base-y (+ base-y (* sub-height (/ index parts-per-side))))
+               )
+          ;; Remove the current highlights
+          (dead-eye-jump--done)
+          (if (= level 1)
+              (progn
+                ;; Jump to selected subregion
+                (let* ((center-x (+ new-base-x (/ sub-width 2)))
+                       (center-y (+ new-base-y (/ sub-height 2))))
+                  (jump-to-pixel center-x center-y))
+                (dead-eye-jump--done))
+            ;; Recursive call
+            (dead-eye-jump new-base-x new-base-y sub-width sub-height (- level 1)))
+          ))
+    (dead-eye-jump--done)
+    )))
 
 ;;1440 762 120 63 (q d r w a s h t f u p : n e o i)
 ;;       (remove-overlays (point-min) (point-max))
