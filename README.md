@@ -8,6 +8,8 @@ And in 3 keys you could move(almost exactly) where you want on the screen.
 
 Add to config
 ```eslisp
+;; your keys to navigate
+(setq dead-eye-jump-keys '("q" "d" "r" "w" "a" "s" "h" "t" "f" "u" "p" ":" "n" "e" "o" "i"))
 (global-set-key (kbd "C-c j") 'dead-eye-jump)
 ```
 
