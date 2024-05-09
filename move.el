@@ -1,3 +1,6 @@
+;; https://github.com/abo-abo/avy/blob/master/avy.el
+;; https://github.com/winterTTr/ace-jump-mode/blob/master/ace-jump-mode.el#L513
+
 ;; https://emacs.stackexchange.com/questions/14920/how-to-determine-the-line-number-of-the-first-visible-line-of-a-window
 ;; https://emacs.stackexchange.com/questions/10763/how-to-update-window-start-without-calling-redisplay/10768#10768
 ;; https://stackoverflow.com/questions/23923371/emacs-calculating-new-window-start-end-without-redisplay/24216247#24216247
@@ -109,6 +112,7 @@
                                                    (buffer-substring-no-properties (point) (1+ (point)))))
                                     (display-string (cond
                                                      ;; from https://github.com/winterTTr/ace-jump-mode/blob/master/ace-jump-mode.el#L513
+                                                     ;; чтобы оверлеи не джоинили строки
                                                      ((string-equal char-at-pos "\t")
                                                       (concat (make-string 1 key) (make-string (1- tab-width) ? )))
                                                      ((string-equal char-at-pos "\n")
