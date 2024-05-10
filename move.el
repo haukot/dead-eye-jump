@@ -67,10 +67,14 @@
   (mapc #'delete-overlay dead-eye-jump--overlays-lead)
   (setq dead-eye-jump--overlays-lead nil))
 
+(defun dead-eye-jump--remove-background ()
+  "Remove background overlays."
+  (mapc #'delete-overlay dead-eye-jump--overlays-back)
+  (setq dead-eye-jump--overlays-back nil))
+
 (defun dead-eye-jump--done ()
   "Clean up overlays."
-  (mapc #'delete-overlay dead-eye-jump--overlays-back)
-  (setq dead-eye-jump--overlays-back nil)
+  (dead-eye-jump--remove-background)
   (dead-eye-jump--remove-leading-chars)
   )
 ;; (dead-eye-jump--done)
@@ -121,7 +125,6 @@
 (defun highlight-to-pixel (x y key)
   "Highlight the character at global frame pixel coordinates X and Y with an overlay showing KEY."
   (interactive)
-  (dead-eye-jump--make-backgrounds (window-list))
   (action-at-pixel x y (lambda (pos target-window)
                          (with-selected-window target-window
                            (unless (eobp)  ; Check if at end of buffer
@@ -160,17 +163,17 @@
       (error "Invalid key! Use one of %s" (mapconcat 'identity keys ", ")))))
 
 ;; Function to highlight keys
-(defun highlight-keys
- (base-x base-y sub-width sub-height keys)
- (dotimes (index 16)
-   (let* ((key (nth index keys))
-          ;; TODO: унифицировать с jump'ом
-          (col (mod index 4))
-          (row (/ index 4))
-          (center-x (+ base-x (* col sub-width) (/ sub-width 2)))
-          (center-y (+ base-y (* row sub-height) (/ sub-height 2))))
-     (message "highlight-to-pixel %d %d %s" center-x center-y key)
-     (highlight-to-pixel center-x center-y (string-to-char key)))))
+(defun highlight-keys (base-x base-y sub-width sub-height keys)
+  (dead-eye-jump--make-backgrounds (window-list))
+  (dotimes (index 16)
+    (let* ((key (nth index keys))
+           ;; TODO: унифицировать с jump'ом
+           (col (mod index 4))
+           (row (/ index 4))
+           (center-x (+ base-x (* col sub-width) (/ sub-width 2)))
+           (center-y (+ base-y (* row sub-height) (/ sub-height 2))))
+      (message "highlight-to-pixel %d %d %s" center-x center-y key)
+      (highlight-to-pixel center-x center-y (string-to-char key)))))
 ;; (highlight-to-pixel 60 982 "n")
 
 ;; read key
@@ -218,7 +221,9 @@
             (dead-eye-jump new-base-x new-base-y sub-width sub-height (- level 1)))
           ))
     (dead-eye-jump--done)
-    )))
+    )
+  (dead-eye-jump--done)
+  ))
 
 ;;1440 762 120 63 (q d r w a s h t f u p : n e o i)
 ;;       (remove-overlays (point-min) (point-max))

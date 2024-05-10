@@ -32,3 +32,4 @@ Press `u`
 # TODO
 
 * Should not count height and width of bars, modelines and so on?
+* Make command to stop in middle of seeking(e.g. if first char already on right spot)
