@@ -33,3 +33,4 @@ Press `u`
 
 * Should not count height and width of bars, modelines and so on?
 * Make command to stop in middle of seeking(e.g. if first char already on right spot)
+* на самом деле нужно оверлеи и в пустых строках ставить, добивая их символами? т.к. квадранты всегда должны быть четко видно, иначе непонятно куда отправит т.к. точка не в центре

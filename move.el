@@ -6,14 +6,25 @@
 ;; https://stackoverflow.com/questions/23923371/emacs-calculating-new-window-start-end-without-redisplay/24216247#24216247
 ;; https://emacs.stackexchange.com/questions/3821/a-faster-method-to-obtain-line-number-at-pos-in-large-buffers
 
-(defun window-at-pixel (x y)
-  "Return the window at frame pixel coordinates X and Y."
-  (catch 'found
-    (dolist (window (window-list))
-      (let ((edges (window-pixel-edges window)))
-        (if (and (>= x (nth 0 edges)) (<= x (nth 2 edges))
-                 (>= y (nth 1 edges)) (<= y (nth 3 edges)))
-            (throw 'found window))))))
+
+(defun find-nearest-window-to-pixel (x y)
+  "Find the window nearest to the pixel coordinates X and Y."
+  (let ((nearest-window nil)
+        (min-distance most-positive-fixnum))
+    (dolist (win (window-list))
+      (let* ((edges (window-pixel-edges win))
+             (left (nth 0 edges))
+             (top (nth 1 edges))
+             (right (nth 2 edges))
+             (bottom (nth 3 edges))
+             (distance (min (abs (- left x))
+                            (abs (- right x))
+                            (abs (- top y))
+                            (abs (- bottom y)))))
+        (when (< distance min-distance)
+          (setq min-distance distance)
+          (setq nearest-window win))))
+    nearest-window))
 
 (defcustom dead-eye-jump-background t
   "When non-nil, a gray background will be added during the selection."
@@ -82,7 +93,7 @@
 (defun action-at-pixel (x y fun)
   "Make an action at the nearest character at global frame pixel coordinates X and Y."
   ;; (interactive)
-  (let ((target-window (window-at-pixel x y)))
+  (let ((target-window (find-nearest-window-to-pixel x y)))
     (if target-window
         (let* ((window-edges (window-pixel-edges target-window))
                (pos-x (- x (first window-edges)))
@@ -198,6 +209,7 @@
   (unwind-protect
       (progn
         ;; Highlight the current region subdivided by the level
+        (message "highlight-keys %d %d %d %d %s" base-x base-y sub-width sub-height keys)
         (highlight-keys base-x base-y sub-width sub-height keys)
 
         (let* ((key (read-char "Press key for next region: "))
