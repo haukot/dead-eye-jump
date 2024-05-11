@@ -3,7 +3,7 @@
 (defvar target-game-buffer "*Target-Game*")
 
 (defface target-face-center
-  '((t :background "red"))
+  '((t :background "#aa00aa"))
   "Face for the center of the target.")
 (defface target-face-middle
   '((t :background "yellow"))
@@ -31,6 +31,9 @@
 (defvar game-score 0
   "Initial score of the game.")
 
+(defvar target-game--timer nil)
+(defvar target-game-timer-seconds 10
+  "Timer for the target game to handle game duration. 0 to endless")
 
 (defun target-game ()
   "Initialize the target shooting game."
@@ -40,6 +43,10 @@
     (switch-to-buffer buffer)
     (target-game-mode)
     (target-game-start-round)
+    (when target-game--timer
+      (cancel-timer target-game--timer))
+    (when (> target-game--timer-seconds 0)
+      (setq target-game--timer (run-with-timer target-game-timer-seconds nil 'target-game-end)))
     (message "Game initialized. Score: %d" game-score)))
 
 ;;; TODO not used yet
@@ -55,17 +62,29 @@
   (target-game-fill-buffer)
   (move-to-window-line 0)
   (beginning-of-line)
-  (target-game-draw-target))
+  (target-game-draw-target)
+  ;; TODO: почему-то после второго повторения не выбирает мишень
+  ;; TODO: why cant use default params?
+  ;; (dead-eye-jump 0 0 (frame-pixel-width) (frame-pixel-height) dead-eye-jump-repeats)
+  )
 
 (defun target-game-end ()
   "End the target game and clean up."
   (interactive)
+  (when target-game--timer
+    (cancel-timer target-game--timer)
+    (setq target-game--timer nil))
   (setq cursor-type nil)
   (when (get-buffer target-game-buffer)
-    (kill-buffer target-game-buffer))
+    (switch-to-buffer target-game-buffer)
+    (target-game-fill-buffer)
+    (move-to-window-line 0)
+    (beginning-of-line)
+    (insert (format "Game ended. Final Score: %d" game-score)))
+  ;; (kill-buffer target-game-buffer))
   (message "Game ended. Final Score: %d" game-score))
 ;; TODO: remove hook
-    ;; (remove-hook 'post-command-hook 'target-game-check-hit t))
+;; (remove-hook 'post-command-hook 'target-game-check-hit t))
 
 (defun target-game-fill-buffer ()
   "Fill the current buffer with whitespace to match the window height."
@@ -85,9 +104,7 @@
       (goto-char (point-min))
       (forward-line line)  ; Move down to the random line.
       (move-to-column column)  ; Move to the random column.
-      (let ((start (point))
-            (layer (random (length target-layer-scores))))
-        (setq current-target-position (list column line layer))
+      (let ((start (point)))
         (dotimes (i target-size)
           (dotimes (j target-size)
             (let ((face (nth j (nth i target-map))))
@@ -102,28 +119,35 @@
           (move-to-column column))
         (overlay-put (make-overlay start (point)) 'target t)))))
 
+(defun target-game-get-remaining-time ()
+  "Get the remaining time in seconds for the target game timer."
+  (if target-game--timer
+      (let ((now (current-time))
+            (next-activation (timer--time target-game--timer)))
+        (floor (- (time-to-seconds next-activation) (time-to-seconds now))))
+    0))
+
 (defun target-game-check-hit ()
   "Check if the cursor is on the target and update the score."
-  (let ((target-pos current-target-position)
-        (current-pos (list (current-column) (line-number-at-pos))))
-    (when (and (>= (car current-pos) (car target-pos))
-               (< (car current-pos) (+ (car target-pos) target-size))
-               (>= (cadr current-pos) (cadr target-pos))
-               (< (cadr current-pos) (+ (cadr target-pos) target-size)))
-      (let ((layer (caddr target-pos)))
-        (setq game-score (+ game-score (nth layer target-layer-scores)))
-        (message "Hit! Score: %d" game-score)
-        (target-game-start-round))))
-  (force-mode-line-update))
-
-(setq debug-on-error t)
+  (let ((face (get-char-property (point) 'face))
+        (seconds-left (target-game-get-remaining-time))
+        points)
+    ;; Determine points based on the face at the current point
+    (setq points (cond ((eq face 'target-face-center) 50)
+                       ((eq face 'target-face-middle) 30)
+                       ((eq face 'target-face-outer) 10)
+                       (t 0)))
+    (when (> points 0)
+      (setq game-score (+ game-score points))
+      (if (> seconds-left 0)
+          (message "Hit! You got %d. Score: %d. Seconds left: %s" points game-score seconds-left)
+        (message "Hit! You got %d. Score: %d" points game-score))
+      (target-game-start-round)
+      (force-mode-line-update))))
 
 (define-derived-mode target-game-mode fundamental-mode "Target-Game"
   "Major mode for playing the target shooting game."
-
   :lighter " Target-Game"
-
-  (message "Setting up...")
   ;; (if target-game-mode
   ;;     (progn
         (message "Setting up target game mode...")

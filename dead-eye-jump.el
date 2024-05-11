@@ -191,6 +191,7 @@
 (defun dead-eye-jump (base-x base-y width height level)
   "Recursively highlight and jump to a more refined part of the frame, starting from a given subregion."
   (interactive (list 0 0 (frame-pixel-width) (frame-pixel-height) dead-eye-jump-repeats)) ; Start with full frame and divide it into parts
+
   ;; (message "dead-eye-jump %d %d %d %d %d" base-x base-y width height level) ;; debug
   (let* ((keys dead-eye-jump-keys)
          (sub-width (max (/ width dead-eye-jump-columns) 1))
