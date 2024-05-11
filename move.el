@@ -6,7 +6,7 @@
 ;; https://stackoverflow.com/questions/23923371/emacs-calculating-new-window-start-end-without-redisplay/24216247#24216247
 ;; https://emacs.stackexchange.com/questions/3821/a-faster-method-to-obtain-line-number-at-pos-in-large-buffers
 
-(defun find-nearest-window-to-pixel (x y)
+(defun dead-eye-jump--find-nearest-window-to-pixel (x y)
   "Find the window nearest to the pixel coordinates X and Y."
   (catch 'found
     (let ((nearest-window nil)
@@ -76,7 +76,6 @@
                       (overlay-put ol 'window w)
                       ol))
                   wnd-list))))
-;; (dead-eye-jump--make-backgrounds (window-list))
 
 (defun dead-eye-jump--remove-leading-chars ()
   "Remove leading char overlays."
@@ -93,24 +92,18 @@
   (dead-eye-jump--remove-background)
   (dead-eye-jump--remove-leading-chars)
   )
-;; (dead-eye-jump--done)
 
-(defun action-at-pixel (x y fun)
+(defun dead-eye-jump--action-at-pixel (x y fun)
   "Make an action at the nearest character at global frame pixel coordinates X and Y."
   ;; (interactive)
-  (let ((target-window (find-nearest-window-to-pixel x y)))
+  (let ((target-window (dead-eye-jump--find-nearest-window-to-pixel x y)))
     (if target-window
         (let* ((window-edges (window-pixel-edges target-window))
                (pos-x (- x (first window-edges)))
                (pos-y (- y (second window-edges)))
-               ;; (window-width (window-body-width target-window t))
-               ;; (window-height (window-body-height target-window t))
-               ;; Т.к. самый последний символ - не обязательно самый крайний x
-               ;; TODO: не будет ли падать в каких-то случаях?
+               ;; Because last char is not always last x
+               ;; TODO: is this robust?
                (max-x (window-body-width target-window t))
-               ;; (max-y (cdr (last(posn-x-y (posn-at-point (window-end target-window t) nil)))))
-               ;; может выбраться символ, которые виден наполовину, и у него будет nil?
-               ;; (max-y (if (not max-pos-y) 1 max-pos-y))
 
                (max-y (- (window-body-height target-window t)
                          (window-mode-line-height target-window)
@@ -131,17 +124,17 @@
             (message "No character found at these local pixel coordinates.")))
       (message "No window found at these global pixel coordinates."))))
 
-(defun jump-to-pixel (x y)
+(defun dead-eye-jump--jump-to-pixel (x y)
   "Jump to the nearest character at global frame pixel coordinates X and Y."
   (interactive)
-  (action-at-pixel x y (lambda (pos target-window)
+  (dead-eye-jump--action-at-pixel x y (lambda (pos target-window)
                            (select-window target-window)
                            (goto-char pos))))
 
-(defun highlight-to-pixel (x y key)
+(defun dead-eye-jump--highlight-to-pixel (x y key)
   "Highlight the character at global frame pixel coordinates X and Y with an overlay showing KEY."
   (interactive)
-  (action-at-pixel x y (lambda (pos target-window)
+  (dead-eye-jump--action-at-pixel x y (lambda (pos target-window)
                          (with-selected-window target-window
                            (unless (eobp)  ; Check if at end of buffer
                              (let* ((ov (make-overlay pos (min (1+ pos) (point-max))))
@@ -167,14 +160,15 @@
                                (overlay-put ov 'category 'dead-eye-jump-myyyy)
                                (overlay-put ov 'display (propertize display-string 'face '(:foreground "red")))
                                (overlay-put ov 'help-echo "Highlighted key")
-                               ;; TODO: в ace-jump записывает прямо в overlay метадату о
-                               ;; позиции, и потом прыгает прямо в неё, как (overlay-put ol 'aj-data p)
+                               ;; TODO: ace-jump writes position metadata right
+                               ;; in overlay like (overlay-put ol 'aj-data p)
+                               ;; and then jumps by that metadata
                                ;; TODO: we probably could show key in correct place(even
                                ;; if it's empty) with overlay-put overlay 'before-string or 'after-string
                                ;; as in https://github.com/alpaker/fill-column-indicator/blob/master/fill-column-indicator.el#L773
                                (push ov dead-eye-jump--overlays-lead)))))))
 
-(defun key-to-part-index (key keys)
+(defun dead-eye-jump--key-to-part-index (key keys)
   "Convert a KEY to a corresponding part index using KEYS array."
   (let ((index (cl-position (char-to-string key) keys :test 'string=)))
     (if index
@@ -182,29 +176,19 @@
       (error "Invalid key! Use one of %s" (mapconcat 'identity keys ", ")))))
 
 ;; Function to highlight keys
-(defun highlight-keys (base-x base-y sub-width sub-height keys)
+(defun dead-eye-jump--highlight-keys (base-x base-y sub-width sub-height keys)
   (dead-eye-jump--make-backgrounds (window-list))
   (dotimes (index 16)
     (let* ((key (nth index keys))
-           ;; TODO: унифицировать с jump'ом
+           ;; TODO: unify with jump
            (col (mod index 4))
            (row (/ index 4))
            (center-x (+ base-x (* col sub-width) (/ sub-width 2)))
            (center-y (+ base-y (* row sub-height) (/ sub-height 2))))
-      (message "highlight-to-pixel %d %d %s" center-x center-y key)
-      (highlight-to-pixel center-x center-y (string-to-char key)))))
-;; (highlight-to-pixel 60 982 "n")
+      (message "dead-eye-jump--highlight-to-pixel %d %d %s" center-x center-y key)
+      (dead-eye-jump--highlight-to-pixel center-x center-y (string-to-char key)))))
 
-;; read key
-;; (highlight-keys 0 0 primary-x-per-part primary-y-per-part keys)
-;; (first-key (read-char "Press first key (one of qdrwashtfup:neoi'): "))
-;; (first-part-index (key-to-part-index first-key keys))
-;; (base-x (* primary-x-per-part (mod first-part-index 4)))
-;; (base-y (* primary-y-per-part (/ first-part-index 4)))
-;;                  (sub-x-per-part (/ primary-x-per-part 4))
-;;                  (sub-y-per-part (/ primary-y-per-part 4))
-;; (dead-eye-jump--done)
-
+;;;###autoload
 (defun dead-eye-jump (base-x base-y width height level)
   "Recursively highlight and jump to a more refined part of the frame, starting from a given subregion."
   (interactive (list 0 0 (frame-pixel-width) (frame-pixel-height) dead-eye-jump-repeats)) ; Start with full frame and divide it into 16 parts
@@ -217,11 +201,11 @@
   (unwind-protect
       (progn
         ;; Highlight the current region subdivided by the level
-        (message "highlight-keys %d %d %d %d %s" base-x base-y sub-width sub-height keys)
-        (highlight-keys base-x base-y sub-width sub-height keys)
+        (message "dead-eye-jump--highlight-keys %d %d %d %d %s" base-x base-y sub-width sub-height keys)
+        (dead-eye-jump--highlight-keys base-x base-y sub-width sub-height keys)
 
         (let* ((key (read-char "Press key for next region: "))
-               (index (key-to-part-index key keys))
+               (index (dead-eye-jump--key-to-part-index key keys))
                (col (mod index parts-per-side))
                (row (/ index parts-per-side))
                (new-base-x (+ base-x (* sub-width col)))
@@ -234,7 +218,7 @@
                 ;; Jump to selected subregion
                 (let* ((center-x (+ new-base-x (/ sub-width 2)))
                        (center-y (+ new-base-y (/ sub-height 2))))
-                  (jump-to-pixel center-x center-y)
+                  (dead-eye-jump--jump-to-pixel center-x center-y)
                   (dead-eye-jump--done))
                 )
             ;; Recursive call
@@ -245,31 +229,15 @@
   (dead-eye-jump--done)
   ))
 
-;;1440 762 120 63 (q d r w a s h t f u p : n e o i)
-;;       (remove-overlays (point-min) (point-max))
-;;       (avy--done)
-
-;; (setq keys '("q" "d" "r" "w" "a" "s" "h" "t" "f" "u" "p" ":" "n" "e" "o" "i"))
-;; (highlight-keys 0 0 480 254 keys)
-;; (highlight-keys 0 0 120 63 keys)
-;; (jump-to-pixel 60 982)
-;; (jump-to-pixel 100 560)
-
-;; (car (posn-x-y (posn-at-point (window-end target-window t) nil)))
-;; (cdr (posn-x-y (posn-at-point (window-end target-window t) nil)))
-
-;; (remove-overlays (point-min) (point-max))
-
-;; (setq debug-on-error t)
-
-(defun remove-overlays-in-all-windows ()
+;; technical function
+(defun dead-eye-jump--remove-overlays-in-all-windows ()
   "Remove all overlays in all buffers displayed in any window."
   (interactive)
   (walk-windows (lambda (window)
                   (with-selected-window window
                     (remove-overlays (point-min) (point-max))))
                 nil t))
-;; (remove-overlays-in-all-windows)
+;; (dead-eye-jump--remove-overlays-in-all-windows)
 
 ;; (setq debug-on-error t)
-(global-set-key (kbd "C-c j") 'dead-eye-jump)
+(global-set-key (kbd "C-j") 'dead-eye-jump)
