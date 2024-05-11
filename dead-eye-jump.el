@@ -1,3 +1,11 @@
+;;; dead-eye-jump.el --- Jump to arbitrary positions in text. -*- lexical-binding: t -*-
+
+;;; Commentary:
+;;
+
+;;; Code:
+
+;;* Customization
 (defcustom dead-eye-jump-background t
   "When non-nil, a gray background will be added during the selection."
   :type 'boolean)
@@ -10,7 +18,7 @@
   :type 'list)
 
 (defcustom dead-eye-jump-repeats 3
-  "Number of times to repeat the jump."
+  "Number of times to repeat the aim"
   :type 'integer)
 
 (defvar dead-eye-jump--overlays-lead nil
@@ -21,6 +29,7 @@
   '((t (:foreground "gray40")))
   "Face for whole window background during selection.")
 
+;;* Internals
 (defun dead-eye-jump--find-nearest-window-to-pixel (x y)
   "Find the window nearest to the pixel coordinates X and Y."
   (catch 'found
@@ -171,6 +180,7 @@
       ;; (message "dead-eye-jump--highlight-to-pixel %d %d %s" center-x center-y key) ;; debug
       (dead-eye-jump--highlight-to-pixel center-x center-y (string-to-char key)))))
 
+;;* Commands
 ;;;###autoload
 (defun dead-eye-jump (base-x base-y width height level)
   "Recursively highlight and jump to a more refined part of the frame, starting from a given subregion."
@@ -221,11 +231,3 @@
                     (remove-overlays (point-min) (point-max))))
                 nil t))
 ;; (dead-eye-jump--remove-overlays-in-all-windows)
-
-;; (setq debug-on-error t)
-
-;; (setq dead-eye-jump-keys '("q" "d"  "f" "u"
-;;                            "r" "w"  "p" ":"
-;;                            "a" "s"  "n" "e"
-;;                            "h" "t"  "o" "i"))
-(global-set-key (kbd "C-j") 'dead-eye-jump)
