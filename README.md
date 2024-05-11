@@ -37,10 +37,6 @@ Press `u`
 # Configuration
 
 ```eslisp
-(defcustom dead-eye-jump-background t
-  "When non-nil, a gray background will be added during the selection."
-  :type 'boolean)
-
 (defcustom dead-eye-jump-keys
   '("q" "w"  "u" "i"
     "e" "r"  "o" "p"
@@ -52,6 +48,18 @@ Press `u`
 (defcustom dead-eye-jump-repeats 3
   "Number of times to repeat the jump."
   :type 'integer)
+
+(defcustom dead-eye-jump-columns 4
+  "Number of columns to divide the frame into."
+  :type 'integer)
+
+(defcustom dead-eye-jump-rows 4
+  "Number of rows to divide the frame into."
+  :type 'integer)
+
+(defcustom dead-eye-jump-background t
+  "When non-nil, a gray background will be added during the selection."
+  :type 'boolean)
 
 (defvar dead-eye-jump--overlays-lead nil
   "Hold overlays for leading chars.")

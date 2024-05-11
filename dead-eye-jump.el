@@ -16,6 +16,12 @@
     "d" "f"  "l" ";")
   "Keys to use for jump"
   :type 'list)
+(defcustom dead-eye-jump-columns 4
+  "Number of columns to divide the frame into."
+  :type 'integer)
+(defcustom dead-eye-jump-rows 4
+  "Number of rows to divide the frame into."
+  :type 'integer)
 
 (defcustom dead-eye-jump-repeats 3
   "Number of times to repeat the aim"
@@ -170,11 +176,11 @@
 ;; Function to highlight keys
 (defun dead-eye-jump--highlight-keys (base-x base-y sub-width sub-height keys)
   (dead-eye-jump--make-backgrounds (window-list))
-  (dotimes (index 16)
+  (dotimes (index (length keys))
     (let* ((key (nth index keys))
            ;; TODO: unify with jump
-           (col (mod index 4))
-           (row (/ index 4))
+           (col (mod index dead-eye-jump-columns))
+           (row (/ index dead-eye-jump-columns))
            (center-x (+ base-x (* col sub-width) (/ sub-width 2)))
            (center-y (+ base-y (* row sub-height) (/ sub-height 2))))
       ;; (message "dead-eye-jump--highlight-to-pixel %d %d %s" center-x center-y key) ;; debug
@@ -184,12 +190,11 @@
 ;;;###autoload
 (defun dead-eye-jump (base-x base-y width height level)
   "Recursively highlight and jump to a more refined part of the frame, starting from a given subregion."
-  (interactive (list 0 0 (frame-pixel-width) (frame-pixel-height) dead-eye-jump-repeats)) ; Start with full frame and divide it into 16 parts
+  (interactive (list 0 0 (frame-pixel-width) (frame-pixel-height) dead-eye-jump-repeats)) ; Start with full frame and divide it into parts
   ;; (message "dead-eye-jump %d %d %d %d %d" base-x base-y width height level) ;; debug
   (let* ((keys dead-eye-jump-keys)
-         (parts-per-side 4)
-         (sub-width (max (/ width parts-per-side) 1))
-         (sub-height (max (/ height parts-per-side) 1)))
+         (sub-width (max (/ width dead-eye-jump-columns) 1))
+         (sub-height (max (/ height dead-eye-jump-rows) 1)))
 
   (unwind-protect
       (progn
@@ -199,8 +204,8 @@
 
         (let* ((key (read-char "Press key for next region: "))
                (index (dead-eye-jump--key-to-part-index key keys))
-               (col (mod index parts-per-side))
-               (row (/ index parts-per-side))
+               (col (mod index dead-eye-jump-columns))
+               (row (/ index dead-eye-jump-columns))
                (new-base-x (+ base-x (* sub-width col)))
                (new-base-y (+ base-y (* sub-height row)))
                )
@@ -231,3 +236,7 @@
                     (remove-overlays (point-min) (point-max))))
                 nil t))
 ;; (dead-eye-jump--remove-overlays-in-all-windows)
+
+(provide 'dead-eye-jump)
+
+;;; dead-eye-jump.el ends here
