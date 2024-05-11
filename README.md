@@ -8,14 +8,19 @@ And in 3 keys you could move(almost exactly) where you want on the screen.
 
 Add to config
 ```eslisp
-;; your keys to navigate
-(setq dead-eye-jump-keys '("q" "d" "r" "w" "a" "s" "h" "t" "f" "u" "p" ":" "n" "e" "o" "i"))
+;; optionally add your keys to navigate
+;; (setq dead-eye-jump-keys '("q" "w"  "u" "i"
+;;                            "e" "r"  "o" "p"
+;;                            "a" "s"  "j" "k"
+;;                            "d" "f"  "l" ";"))
+
+;; add keybdinging
 (global-set-key (kbd "C-j") 'dead-eye-jump)
 ```
 
 `C-j <char> <char> <char>`
 
-Examples (on Workman keyboard layout, you could set Querty keys):
+Examples:
 
 `C-j`
 ![1](./assets/1.png)
@@ -28,6 +33,36 @@ Press `h`
 
 Press `u`
 ![4](./assets/4.png)
+
+# Configuration
+
+```eslisp
+(defcustom dead-eye-jump-background t
+  "When non-nil, a gray background will be added during the selection."
+  :type 'boolean)
+
+(defcustom dead-eye-jump-keys
+  '("q" "w"  "u" "i"
+    "e" "r"  "o" "p"
+    "a" "s"  "j" "k"
+    "d" "f"  "l" ";")
+  "Keys to use for jump"
+  :type 'list)
+
+(defcustom dead-eye-jump-repeats 3
+  "Number of times to repeat the jump."
+  :type 'integer)
+
+(defvar dead-eye-jump--overlays-lead nil
+  "Hold overlays for leading chars.")
+
+(defvar dead-eye-jump--overlays-back nil
+  "Hold overlays for when `dead-eye-jump-background' is t.")
+
+(defface dead-eye-jump-background-face
+  '((t (:foreground "gray40")))
+  "Face for whole window background during selection.")
+```
 
 # TODO
 

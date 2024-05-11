@@ -1,20 +1,13 @@
 (defcustom dead-eye-jump-background t
   "When non-nil, a gray background will be added during the selection."
   :type 'boolean)
-(defcustom dead-eye-jump-keys nil
+(defcustom dead-eye-jump-keys
+  '("q" "w"  "u" "i"
+    "e" "r"  "o" "p"
+    "a" "s"  "j" "k"
+    "d" "f"  "l" ";")
   "Keys to use for jump"
   :type 'list)
-
-;; Workman keyboard layout keys, could be querty
-;; (setq dead-eye-jump-keys '("q" "d"  "r" "w"
-;;                            "a" "s"  "h" "t"
-;;                            "f" "u"  "p" ":"
-;;                            "n" "e"  "o" "i"))
-
-(setq dead-eye-jump-keys '("q" "d"  "f" "u"
-                           "r" "w"  "p" ":"
-                           "a" "s"  "n" "e"
-                           "h" "t"  "o" "i"))
 
 (defcustom dead-eye-jump-repeats 3
   "Number of times to repeat the jump."
@@ -230,4 +223,9 @@
 ;; (dead-eye-jump--remove-overlays-in-all-windows)
 
 ;; (setq debug-on-error t)
+
+;; (setq dead-eye-jump-keys '("q" "d"  "f" "u"
+;;                            "r" "w"  "p" ":"
+;;                            "a" "s"  "n" "e"
+;;                            "h" "t"  "o" "i"))
 (global-set-key (kbd "C-j") 'dead-eye-jump)
