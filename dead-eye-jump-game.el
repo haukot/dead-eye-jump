@@ -45,7 +45,7 @@
     (target-game-start-round)
     (when target-game--timer
       (cancel-timer target-game--timer))
-    (when (> target-game--timer-seconds 0)
+    (when (> target-game-timer-seconds 0)
       (setq target-game--timer (run-with-timer target-game-timer-seconds nil 'target-game-end)))
     (message "Game initialized. Score: %d" game-score)))
 
@@ -60,8 +60,8 @@
   "Reset the target game."
   (interactive)
   (target-game-fill-buffer)
-  (move-to-window-line 0)
-  (beginning-of-line)
+  ;; (move-to-window-line 0)
+  (beginning-of-buffer)
   (target-game-draw-target)
   ;; TODO: почему-то после второго повторения не выбирает мишень
   ;; TODO: why cant use default params?
@@ -80,7 +80,14 @@
     (target-game-fill-buffer)
     (move-to-window-line 0)
     (beginning-of-line)
-    (insert (format "Game ended. Final Score: %d" game-score)))
+    (insert (format "Game ended. Final Score: %d" game-score))
+    (newline)
+    (insert-button "Start Game"
+                   'action (lambda (x) (target-game))
+                   'follow-link t
+                   'help-echo "Click to start a new game.")
+    (beginning-of-line)
+    )
   ;; (kill-buffer target-game-buffer))
   (message "Game ended. Final Score: %d" game-score))
 ;; TODO: remove hook
@@ -133,9 +140,9 @@
         (seconds-left (target-game-get-remaining-time))
         points)
     ;; Determine points based on the face at the current point
-    (setq points (cond ((eq face 'target-face-center) 50)
-                       ((eq face 'target-face-middle) 30)
-                       ((eq face 'target-face-outer) 10)
+    (setq points (cond ((eq face 'target-face-center) (nth 2 target-layer-scores))
+                       ((eq face 'target-face-middle) (nth 1 target-layer-scores))
+                       ((eq face 'target-face-outer) (nth 0 target-layer-scores))
                        (t 0)))
     (when (> points 0)
       (setq game-score (+ game-score points))
