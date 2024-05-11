@@ -12,7 +12,7 @@
   "Face for the outer layer of the target.")
 
 (defvar dead-eye-jump-game--layer-scores '(10 30 50))
-(defvar dead-eye-jump-game--target-size 7)
+(defvar dead-eye-jump-game-target-size 7)
 (defvar dead-eye-jump-game-target-template
   (list
    (list 'dead-eye-jump-game-target-face-outer 'dead-eye-jump-game-target-face-outer 'dead-eye-jump-game-target-face-outer 'dead-eye-jump-game-target-face-outer 'dead-eye-jump-game-target-face-outer 'dead-eye-jump-game-target-face-outer    'dead-eye-jump-game-target-face-outer)
@@ -91,9 +91,9 @@
 
 (defun dead-eye-jump-game-draw-target ()
   "Draw a 5x5 target with different colors at a random position in the buffer."
-  (let* ((max-line (- (max 1 (line-number-at-pos (point-max))) dead-eye-jump-game--target-size))
+  (let* ((max-line (- (max 1 (line-number-at-pos (point-max))) dead-eye-jump-game-target-size))
          (line (random max-line))
-         (max-column (- (max 1 (window-body-width)) dead-eye-jump-game--target-size 1))
+         (max-column (- (max 1 (window-body-width)) dead-eye-jump-game-target-size 1))
          (column (random max-column))
          (target-map dead-eye-jump-game-target-template))
     (save-excursion
@@ -101,14 +101,14 @@
       (forward-line line)
       (move-to-column column)
       (let ((start (point)))
-        (dotimes (i dead-eye-jump-game--target-size)
-          (dotimes (j dead-eye-jump-game--target-size)
+        (dotimes (i dead-eye-jump-game-target-size)
+          (dotimes (j dead-eye-jump-game-target-size)
             (let ((face (nth j (nth i target-map))))
               (delete-char 1)
               (backward-char 1)
               (insert (propertize " " 'face face)))
             ;; Move to the next character, if not at the end of the row.
-            (when (< j (1- dead-eye-jump-game--target-size))
+            (when (< j (1- dead-eye-jump-game-target-size))
               (forward-char 1)))
           (forward-line 1)
           (move-to-column column))
