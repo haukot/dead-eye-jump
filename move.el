@@ -6,25 +6,49 @@
 ;; https://stackoverflow.com/questions/23923371/emacs-calculating-new-window-start-end-without-redisplay/24216247#24216247
 ;; https://emacs.stackexchange.com/questions/3821/a-faster-method-to-obtain-line-number-at-pos-in-large-buffers
 
+;; (require 'pos-tip)
+
+;; (defun show-popup-at-pixel (text x y)
+;;   "Show a popup TEXT at pixel coordinates X and Y."
+;;   (pos-tip-show "sht" '("red" . "yellow") nil nil nil nil '(0 . 0))
+;;   (pos-tip-show "sht" '("red" . "yellow") nil nil nil nil '(-100 . -100))
+;;   (pos-tip-show "sht" '("red" . "yellow") nil nil nil nil '(100 . 100)))
+;;   ;; (pos-tip-show text nil nil nil 3000 nil 300 300))
+;; (show-popup-at-pixel "Hello, world!" 100 100)
+
+;;  (let ((ol (make-overlay (+ 20 (point)) (+ 30 (point)))))
+;;     (overlay-put ol 'priority hl-line-overlay-priority) ;(bug#16192)
+;;     (overlay-put ol 'display (propertize "sahtashtast" 'face '(:foreground "red")))
+;;     (overlay-put ol 'face hl-line-face)
+;;     ol)
+
+;; (make-overlay pos (min (1+ pos) (point-max))))
+;; (line-end-position)
 
 (defun find-nearest-window-to-pixel (x y)
   "Find the window nearest to the pixel coordinates X and Y."
-  (let ((nearest-window nil)
-        (min-distance most-positive-fixnum))
-    (dolist (win (window-list))
-      (let* ((edges (window-pixel-edges win))
-             (left (nth 0 edges))
-             (top (nth 1 edges))
-             (right (nth 2 edges))
-             (bottom (nth 3 edges))
-             (distance (min (abs (- left x))
-                            (abs (- right x))
-                            (abs (- top y))
-                            (abs (- bottom y)))))
-        (when (< distance min-distance)
-          (setq min-distance distance)
-          (setq nearest-window win))))
-    nearest-window))
+  (catch 'found
+    (let ((nearest-window nil)
+          (min-distance most-positive-fixnum))
+      (dolist (win (window-list))
+        (let* ((edges (window-pixel-edges win))
+               (left (nth 0 edges))
+               (top (nth 1 edges))
+               (right (nth 2 edges))
+               (bottom (nth 3 edges))
+               (distance (min (abs (- left x))
+                              (abs (- right x))
+                              (abs (- top y))
+                              (abs (- bottom y)))))
+          ;; return if find exact match
+          (if (and (>= x (nth 0 edges)) (<= x (nth 2 edges))
+                   (>= y (nth 1 edges)) (<= y (nth 3 edges)))
+              (throw 'found win))
+          ;; else seek for min distance
+          (when (< distance min-distance)
+            (setq min-distance distance)
+            (setq nearest-window win))))
+      nearest-window)))
 
 (defcustom dead-eye-jump-background t
   "When non-nil, a gray background will be added during the selection."
