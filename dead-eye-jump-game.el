@@ -102,21 +102,6 @@
           (move-to-column column))
         (overlay-put (make-overlay start (point)) 'target t)))))
 
-;; (defun target-game-check-hit ()
-;;   "Check if the cursor is within the target and update the score."
-;;   (interactive)
-;;   (let ((x (car current-target-position))
-;;         (y (cadr current-target-position))
-;;         (layer (caddr current-target-position))
-;;         (px (current-column))
-;;         (py (line-number-at-pos (point) t)))
-;;     (when (and (>= px x) (< px (+ x target-size))
-;;                (>= py y) (< py (+ y target-size)))
-;;       (setq game-score (+ game-score (nth layer target-layer-scores)))
-;;       (message "Hit! Score: %d" game-score)
-;;       (erase-buffer)
-;;       (target-game-draw-target))))
-
 (defun target-game-check-hit ()
   "Check if the cursor is on the target and update the score."
   (let ((target-pos current-target-position)
@@ -136,7 +121,7 @@
 (define-derived-mode target-game-mode fundamental-mode "Target-Game"
   "Major mode for playing the target shooting game."
 
-  ;; :lighter " Target-Game"
+  :lighter " Target-Game"
 
   (message "Setting up...")
   ;; (if target-game-mode
@@ -146,7 +131,7 @@
         (when (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
         (when (fboundp 'tool-bar-mode) (tool-bar-mode -1))
         (when (fboundp 'menu-bar-mode) (menu-bar-mode -1))
-        ;; (add-hook 'post-command-hook 'target-game-check-hit nil t)
+        (add-hook 'post-command-hook 'target-game-check-hit nil t)
         )
 
 ;; (provide 'target-game)
