@@ -1,10 +1,32 @@
-;; https://github.com/abo-abo/avy/blob/master/avy.el
-;; https://github.com/winterTTr/ace-jump-mode/blob/master/ace-jump-mode.el#L513
+(defcustom dead-eye-jump-background t
+  "When non-nil, a gray background will be added during the selection."
+  :type 'boolean)
+(defcustom dead-eye-jump-keys nil
+  "Keys to use for jump"
+  :type 'list)
 
-;; https://emacs.stackexchange.com/questions/14920/how-to-determine-the-line-number-of-the-first-visible-line-of-a-window
-;; https://emacs.stackexchange.com/questions/10763/how-to-update-window-start-without-calling-redisplay/10768#10768
-;; https://stackoverflow.com/questions/23923371/emacs-calculating-new-window-start-end-without-redisplay/24216247#24216247
-;; https://emacs.stackexchange.com/questions/3821/a-faster-method-to-obtain-line-number-at-pos-in-large-buffers
+;; Workman keyboard layout keys, could be querty
+;; (setq dead-eye-jump-keys '("q" "d"  "r" "w"
+;;                            "a" "s"  "h" "t"
+;;                            "f" "u"  "p" ":"
+;;                            "n" "e"  "o" "i"))
+
+(setq dead-eye-jump-keys '("q" "d"  "f" "u"
+                           "r" "w"  "p" ":"
+                           "a" "s"  "n" "e"
+                           "h" "t"  "o" "i"))
+
+(defcustom dead-eye-jump-repeats 3
+  "Number of times to repeat the jump."
+  :type 'integer)
+
+(defvar dead-eye-jump--overlays-lead nil
+  "Hold overlays for leading chars.")
+(defvar dead-eye-jump--overlays-back nil
+  "Hold overlays for when `dead-eye-jump-background' is t.")
+(defface dead-eye-jump-background-face
+  '((t (:foreground "gray40")))
+  "Face for whole window background during selection.")
 
 (defun dead-eye-jump--find-nearest-window-to-pixel (x y)
   "Find the window nearest to the pixel coordinates X and Y."
@@ -30,38 +52,6 @@
             (setq min-distance distance)
             (setq nearest-window win))))
       nearest-window)))
-
-(defcustom dead-eye-jump-background t
-  "When non-nil, a gray background will be added during the selection."
-  :type 'boolean)
-(defcustom dead-eye-jump-keys nil
-  "Keys to use for jump"
-  :type 'list)
-;; Workman layout keys, could be querty
-;; (setq dead-eye-jump-keys '("q" "d" "r" "w" "a" "s" "h" "t" "f" "u" "p" ":" "n" "e" "o" "i"))
-
-
-;; (setq dead-eye-jump-keys '("q" "d"  "r" "w"
-;;                            "a" "s"  "h" "t"
-;;                            "f" "u"  "p" ":"
-;;                            "n" "e"  "o" "i"))
-
-(setq dead-eye-jump-keys '("q" "d"  "f" "u"
-                           "r" "w"  "p" ":"
-                           "a" "s"  "n" "e"
-                           "h" "t"  "o" "i"))
-
-(defcustom dead-eye-jump-repeats 3
-  "Number of times to repeat the jump."
-  :type 'integer)
-
-(defvar dead-eye-jump--overlays-lead nil
-  "Hold overlays for leading chars.")
-(defvar dead-eye-jump--overlays-back nil
-  "Hold overlays for when `dead-eye-jump-background' is t.")
-(defface dead-eye-jump-background-face
-  '((t (:foreground "gray40")))
-  "Face for whole window background during selection.")
 
 (defun dead-eye-jump--make-backgrounds (wnd-list)
   "Create a dim background overlay for each window on WND-LIST."
@@ -111,7 +101,7 @@
                          (window-tab-line-height target-window)
                          ))
 
-               (xx (message "J Value of max-x: %s, max-y: %s" max-x max-y))
+               ;; (xx (message "J Value of max-x: %s, max-y: %s" max-x max-y)) ;; debug
                (local-x (if (and (>= pos-x 0) (<= pos-x max-x))
                             pos-x
                           max-x))
@@ -185,14 +175,14 @@
            (row (/ index 4))
            (center-x (+ base-x (* col sub-width) (/ sub-width 2)))
            (center-y (+ base-y (* row sub-height) (/ sub-height 2))))
-      (message "dead-eye-jump--highlight-to-pixel %d %d %s" center-x center-y key)
+      ;; (message "dead-eye-jump--highlight-to-pixel %d %d %s" center-x center-y key) ;; debug
       (dead-eye-jump--highlight-to-pixel center-x center-y (string-to-char key)))))
 
 ;;;###autoload
 (defun dead-eye-jump (base-x base-y width height level)
   "Recursively highlight and jump to a more refined part of the frame, starting from a given subregion."
   (interactive (list 0 0 (frame-pixel-width) (frame-pixel-height) dead-eye-jump-repeats)) ; Start with full frame and divide it into 16 parts
-  (message "dead-eye-jump %d %d %d %d %d" base-x base-y width height level)
+  ;; (message "dead-eye-jump %d %d %d %d %d" base-x base-y width height level) ;; debug
   (let* ((keys dead-eye-jump-keys)
          (parts-per-side 4)
          (sub-width (max (/ width parts-per-side) 1))
@@ -201,7 +191,7 @@
   (unwind-protect
       (progn
         ;; Highlight the current region subdivided by the level
-        (message "dead-eye-jump--highlight-keys %d %d %d %d %s" base-x base-y sub-width sub-height keys)
+        ;; (message "dead-eye-jump--highlight-keys %d %d %d %d %s" base-x base-y sub-width sub-height keys) ;; debug
         (dead-eye-jump--highlight-keys base-x base-y sub-width sub-height keys)
 
         (let* ((key (read-char "Press key for next region: "))
