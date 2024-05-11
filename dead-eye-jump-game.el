@@ -60,8 +60,8 @@
   "Reset the target game."
   (interactive)
   (target-game-fill-buffer)
-  ;; (move-to-window-line 0)
-  (beginning-of-buffer)
+  (move-to-window-line 0)
+  (beginning-of-line)
   (target-game-draw-target)
   ;; TODO: почему-то после второго повторения не выбирает мишень
   ;; TODO: why cant use default params?
@@ -136,7 +136,8 @@
 
 (defun target-game-check-hit ()
   "Check if the cursor is on the target and update the score."
-  (let ((face (get-char-property (point) 'face))
+  (let ((face ((if (eobp) nil
+                 (get-char-property (point) 'face)))
         (seconds-left (target-game-get-remaining-time))
         points)
     ;; Determine points based on the face at the current point
