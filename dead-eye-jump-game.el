@@ -103,15 +103,18 @@
       (let ((start (point)))
         (dotimes (i dead-eye-jump-game-target-size)
           (dotimes (j dead-eye-jump-game-target-size)
-            (let ((face (nth j (nth i target-map))))
-              (delete-char 1)
-              (backward-char 1)
-              (insert (propertize " " 'face face)))
-            ;; Move to the next character, if not at the end of the row.
-            (when (< j (1- dead-eye-jump-game-target-size))
-              (forward-char 1)))
-          (forward-line 1)
-          (move-to-column column))
+            (unless (eobp)  ; Check if at end of buffer before attempting to modify the buffer
+              (let ((face (nth j (nth i target-map))))
+                (delete-char 1)
+                (backward-char 1)
+                (insert (propertize " " 'face face)))
+              ;; Move to the next character, if not at the end of the row and not at the end of the buffer.
+              (when (and (< j (1- dead-eye-jump-game-target-size)) (not (eobp)))
+                (forward-char 1))))
+          ;; Move to the next line if not at the end of the buffer.
+          (unless (or (eobp) (= i (1- dead-eye-jump-game-target-size)))
+            (forward-line 1)
+            (move-to-column column)))
         (overlay-put (make-overlay start (point)) 'target t)))))
 
 (defun dead-eye-jump-game-get-remaining-time ()
