@@ -1,23 +1,32 @@
 ;;; -*- lexical-binding: t -*-
 
 (defvar target-game-buffer "*Target-Game*")
-(defvar target-layer-scores '(10 20 30))
-(defvar target-size 5)
-(defvar current-target-position nil)
-(defvar game-score 0
-  "Initial score of the game.")
 
 (defface target-face-center
   '((t :background "red"))
   "Face for the center of the target.")
-
 (defface target-face-middle
   '((t :background "yellow"))
   "Face for the middle layer of the target.")
-
 (defface target-face-outer
   '((t :background "green"))
   "Face for the outer layer of the target.")
+
+(defvar target-layer-scores '(10 30 50))
+(defvar target-size 7)
+(defvar target-template
+  (list
+   (list 'target-face-outer 'target-face-outer 'target-face-outer 'target-face-outer 'target-face-outer 'target-face-outer    'target-face-outer)
+   (list 'target-face-outer 'target-face-outer 'target-face-outer 'target-face-outer 'target-face-outer 'target-face-outer    'target-face-outer)
+   (list 'target-face-outer 'target-face-outer 'target-face-middle 'target-face-middle 'target-face-middle 'target-face-outer 'target-face-outer)
+   (list 'target-face-outer 'target-face-outer 'target-face-middle 'target-face-center 'target-face-middle 'target-face-outer 'target-face-outer)
+   (list 'target-face-outer 'target-face-outer 'target-face-middle 'target-face-middle 'target-face-middle 'target-face-outer 'target-face-outer)
+   (list 'target-face-outer 'target-face-outer 'target-face-outer 'target-face-outer 'target-face-outer 'target-face-outer    'target-face-outer)
+   (list 'target-face-outer 'target-face-outer 'target-face-outer 'target-face-outer 'target-face-outer 'target-face-outer    'target-face-outer)
+   ))
+(defvar current-target-position nil)
+(defvar game-score 0
+  "Initial score of the game.")
 
 (defun target-game ()
   "Initialize the target shooting game."
@@ -25,26 +34,17 @@
   (setq game-score 0)  ; Reset the game score.
   (let ((buffer (get-buffer-create target-game-buffer)))
     (switch-to-buffer buffer)
-    (erase-buffer)
-    (target-game-fill-buffer)
     (target-game-mode)
-    (move-to-window-line 0)
-    (beginning-of-line)
-    (target-game-draw-target)
+    (traget-game-start-round)
     (message "Game initialized. Score: %d" game-score)))
 
-;; (defun target-game-init ()
-;;   "Initialize the target shooting game."
-;;   (interactive)
-;;   (setq game-score 0)  ; Reset the game score.
-;;   (let ((buffer (get-buffer-create target-game-buffer)))
-;;     (with-current-buffer buffer
-;;       (target-game-mode)
-;;       (erase-buffer)
-;;       (target-game-fill-buffer 400)  ; Fill buffer with 400 lines of whitespace.
-;;       (target-game-draw-target))
-;;     (switch-to-buffer buffer))
-;;   (message "Game initialized. Score: %d" game-score))
+(defun traget-game-start-round ()
+  "Reset the target game."
+  (interactive)
+  (target-game-fill-buffer)
+  (move-to-window-line 0)
+  (beginning-of-line)
+  (target-game-draw-target))
 
 (defun target-game-end ()
   "End the target game and clean up."
@@ -60,15 +60,9 @@
   (when (fboundp 'menu-bar-mode) (menu-bar-mode -1))
   (setq-local cursor-type 'box))
 
-;; (defun target-game-fill-buffer (lines)
-;;   "Fill the current buffer with enough whitespace to reach LINES lines."
-;;   (goto-char (point-min))
-;;   (dotimes (_ lines)
-;;     (insert (make-string (window-width) ?\s) "\n")))
 (defun target-game-fill-buffer ()
   "Fill the current buffer with whitespace to match the window height."
   (erase-buffer)  ; Clear the buffer first to ensure it's clean.
-
   (let ((lines (window-body-height)))  ; Get the number of lines in the current window.
     (dotimes (_ lines)
       (insert (make-string (- (window-body-width) 10) ?\s) "\n"))))
@@ -77,13 +71,9 @@
   "Draw a 5x5 target with different colors at a random position in the buffer."
   (let* ((max-line (- (max 1 (line-number-at-pos (point-max))) target-size))
          (line (random max-line))
-         (max-column (- (max 1 (window-body-width)) target-size))
+         (max-column (- (max 1 (window-body-width)) target-size) 1)
          (column (random max-column))
-         (target-map (list (list 'target-face-outer 'target-face-outer 'target-face-outer 'target-face-outer 'target-face-outer)
-                           (list 'target-face-outer 'target-face-middle 'target-face-middle 'target-face-middle 'target-face-outer)
-                           (list 'target-face-outer 'target-face-middle 'target-face-center 'target-face-middle 'target-face-outer)
-                           (list 'target-face-outer 'target-face-middle 'target-face-middle 'target-face-middle 'target-face-outer)
-                           (list 'target-face-outer 'target-face-outer 'target-face-outer 'target-face-outer 'target-face-outer))))
+         (target-map (target-template))
     (save-excursion
       (goto-char (point-min))
       (forward-line line)  ; Move down to the random line.
@@ -103,7 +93,6 @@
           (move-to-column column))
         (overlay-put (make-overlay start (point)) 'target t)))))
 
-
 (defun target-game-check-hit ()
   "Check if the cursor is within the target and update the score."
   (interactive)
@@ -119,5 +108,4 @@
       (erase-buffer)
       (target-game-draw-target))))
 
-
-(provide 'target-game)
+;; (provide 'target-game)
