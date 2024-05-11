@@ -10,14 +10,14 @@ Add to config
 ```eslisp
 ;; your keys to navigate
 (setq dead-eye-jump-keys '("q" "d" "r" "w" "a" "s" "h" "t" "f" "u" "p" ":" "n" "e" "o" "i"))
-(global-set-key (kbd "C-c j") 'dead-eye-jump)
+(global-set-key (kbd "C-j") 'dead-eye-jump)
 ```
 
-`C+c j <char> <char> <char>`
+`C-j <char> <char> <char>`
 
-Examples (on Workman keyboard layout, that's why its not Querty):
+Examples (on Workman keyboard layout, you could set Querty keys):
 
-`C+c j`
+`C-j`
 ![1](./assets/1.png)
 
 Press `a`
@@ -33,4 +33,9 @@ Press `u`
 
 * Should not count height and width of bars, modelines and so on?
 * Make command to stop in middle of seeking(e.g. if first char already on right spot)
-* на самом деле нужно оверлеи и в пустых строках ставить, добивая их символами? т.к. квадранты всегда должны быть четко видно, иначе непонятно куда отправит т.к. точка не в центре
+* Overlays should be placed in empty places also, padding them with characters. This is because the quadrants should always be clearly visible, otherwise it's unclear where it will send since the point is not in the center.
+
+# Similar packages
+
+* https://github.com/abo-abo/avy
+* https://github.com/winterTTr/ace-jump-mode
