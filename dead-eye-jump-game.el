@@ -32,7 +32,7 @@
   "Initial score of the game.")
 
 (defvar target-game--timer nil)
-(defvar target-game-timer-seconds 10
+(defvar target-game-timer-seconds 60
   "Timer for the target game to handle game duration. 0 to endless")
 
 (defun target-game ()
