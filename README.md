@@ -8,6 +8,8 @@ And in 3 keys you could move(almost exactly) where you want on the screen.
 
 Add to config
 ```eslisp
+(require 'dead-eye-jump)
+
 ;; optionally add your keys to navigate
 ;; (setq dead-eye-jump-keys '("q" "w"  "u" "i"
 ;;                            "e" "r"  "o" "p"
@@ -33,6 +35,18 @@ Press `h`
 
 Press `u`
 ![4](./assets/4.png)
+
+# Game
+
+To test and play you could run simple shoot target game
+
+```eslisp
+(require 'dead-eye-jump-game)
+
+;; and then run command dead-eye-jump-game
+```
+
+![game](./assets/game.png)
 
 # Configuration
 
