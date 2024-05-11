@@ -69,7 +69,8 @@
 
   (let ((lines (window-body-height)))  ; Get the number of lines in the current window.
     (dotimes (_ lines)
-      (insert (make-string (window-body-width) ?\s) "\n"))))
+      (insert (make-string (- (window-body-width) 10) ?\s) "\n"))))
+
 
 (defun target-game-draw-target ()
   "Draw a 5x5 target with different colors at a random position in the buffer."
@@ -82,21 +83,23 @@
                            (list 'target-face-outer 'target-face-middle 'target-face-center 'target-face-middle 'target-face-outer)
                            (list 'target-face-outer 'target-face-middle 'target-face-middle 'target-face-middle 'target-face-outer)
                            (list 'target-face-outer 'target-face-outer 'target-face-outer 'target-face-outer 'target-face-outer))))
-    (goto-char (point-min))
-    (forward-line line)
-    (forward-char column)
-    (let ((start (point)))
-      (dotimes (i target-size)
-        (dotimes (j target-size)
-          (let ((face (nth j (nth i target-map))))
-            (delete-char 1)
-            (insert (propertize " " 'face face))))
-        (insert "\n")
-        (forward-line 1)
-        (forward-char (- target-size)))
-      (overlay-put (make-overlay start (point)) 'target t))))
-
-
+    (save-excursion
+      (goto-char (point-min))
+      (forward-line line)  ; Move down to the random line.
+      (move-to-column column)  ; Move to the random column.
+      (let ((start (point)))
+        (dotimes (i target-size)
+          (dotimes (j target-size)
+            (let ((face (nth j (nth i target-map))))
+              (delete-char 1)
+              (insert (propertize " " 'face face)))
+            ;; Move to the next character, if not at the end of the row.
+            (when (< j (1- target-size))
+              (forward-char 1)))
+          ;; After finishing a row, move to the start of the next line.
+          (forward-line 1)
+          (move-to-column column))
+        (overlay-put (make-overlay start (point)) 'target t)))))
 
 
 (defun target-game-check-hit ()
