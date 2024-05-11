@@ -28,6 +28,8 @@
     (erase-buffer)
     (target-game-fill-buffer)
     (target-game-mode)
+    (move-to-window-line 0)
+    (beginning-of-line)
     (target-game-draw-target)
     (message "Game initialized. Score: %d" game-score)))
 
@@ -71,7 +73,6 @@
     (dotimes (_ lines)
       (insert (make-string (- (window-body-width) 10) ?\s) "\n"))))
 
-
 (defun target-game-draw-target ()
   "Draw a 5x5 target with different colors at a random position in the buffer."
   (let* ((max-line (- (max 1 (line-number-at-pos (point-max))) target-size))
@@ -92,6 +93,7 @@
           (dotimes (j target-size)
             (let ((face (nth j (nth i target-map))))
               (delete-char 1)
+              (backward-char 1)
               (insert (propertize " " 'face face)))
             ;; Move to the next character, if not at the end of the row.
             (when (< j (1- target-size))
