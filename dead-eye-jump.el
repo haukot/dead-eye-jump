@@ -26,6 +26,9 @@
 (defcustom dead-eye-jump-repeats 3
   "Number of times to repeat the aim"
   :type 'integer)
+(defcustom dead-eye-jump-show-message t
+  "Show message before jumping"
+  :type 'boolean)
 
 (defvar dead-eye-jump--overlays-lead nil
   "Hold overlays for leading chars.")
@@ -188,9 +191,16 @@
 
 ;;* Commands
 ;;;###autoload
-(defun dead-eye-jump (base-x base-y width height level)
+(defun dead-eye-jump ()
+    "Recursively highlight and jump to a more refined part of the frame, starting from full frame"
+  (interactive)
+  (dead-eye-jump-region 0 0 (frame-pixel-width) (frame-pixel-height) dead-eye-jump-repeats))
+
+;;;###autoload
+(defun dead-eye-jump-region (base-x base-y width height level)
   "Recursively highlight and jump to a more refined part of the frame, starting from a given subregion."
-  (interactive (list 0 0 (frame-pixel-width) (frame-pixel-height) dead-eye-jump-repeats)) ; Start with full frame and divide it into parts
+  (interactive)
+
   ;; (message "dead-eye-jump %d %d %d %d %d" base-x base-y width height level) ;; debug
   (let* ((keys dead-eye-jump-keys)
          (sub-width (max (/ width dead-eye-jump-columns) 1))
@@ -202,7 +212,9 @@
         ;; (message "dead-eye-jump--highlight-keys %d %d %d %d %s" base-x base-y sub-width sub-height keys) ;; debug
         (dead-eye-jump--highlight-keys base-x base-y sub-width sub-height keys)
 
-        (let* ((key (read-char "Press key for next region: "))
+        (let* ((key (if dead-eye-jump-show-message
+                         (read-char "Press key for next region: ")
+                       (read-char)))
                (index (dead-eye-jump--key-to-part-index key keys))
                (col (mod index dead-eye-jump-columns))
                (row (/ index dead-eye-jump-columns))
@@ -220,7 +232,7 @@
                   (dead-eye-jump--done))
                 )
             ;; Recursive call
-            (dead-eye-jump new-base-x new-base-y sub-width sub-height (- level 1)))
+            (dead-eye-jump-region new-base-x new-base-y sub-width sub-height (- level 1)))
           ))
     (dead-eye-jump--done)
     )
