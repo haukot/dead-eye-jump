@@ -8,7 +8,7 @@
   "Face for the center of the target.")
 (defface dead-eye-jump-game-target-face-middle '((t :background "yellow"))
   "Face for the middle layer of the target.")
-(defface dead-eye-jump-game-target-face-outer '((t :background "green"))
+(defface dead-eye-jump-game-target-face-outer '((t :background "#55ee55"))
   "Face for the outer layer of the target.")
 
 (defvar dead-eye-jump-game--layer-scores '(10 30 50))
@@ -44,7 +44,7 @@
       (cancel-timer dead-eye-jump-game--timer))
     (when (> dead-eye-jump-game-timer-seconds 0)
       (setq dead-eye-jump-game--timer (run-with-timer dead-eye-jump-game-timer-seconds nil 'dead-eye-jump-game-end)))
-    (add-hook 'post-command-hook 'dead-eye-jump-game-check-hit nil t)
+    (add-hook 'post-command-hook 'dead-eye-jump-game-check-hit-safe nil t)
     (message "Game initialized. Score: %d" dead-eye-jump-game--score)))
 
 (defun dead-eye-jump-game-start-round ()
@@ -54,9 +54,10 @@
   (move-to-window-line 0)
   (beginning-of-line)
   (dead-eye-jump-game-draw-target)
-  ;; TODO: почему-то после второго повторения не выбирает мишень
-  ;; TODO: why cant use default params?
-  ;; (dead-eye-jump 0 0 (frame-pixel-width) (frame-pixel-height) dead-eye-jump-repeats)
+  ;; run second automatically. call-interactively alone is not enough?
+  (setq dead-eye-jump-show-message nil)
+  (call-interactively 'dead-eye-jump)
+  (dead-eye-jump-game-check-hit)
   )
 
 (defun dead-eye-jump-game-end ()
@@ -139,6 +140,14 @@
         (message "Hit! You got %d. Score: %d" points dead-eye-jump-game--score))
       (dead-eye-jump-game-start-round)
       (force-mode-line-update))))
+
+;; TODO: is this enough?
+(defun dead-eye-jump-game-check-hit-safe ()
+  "Safe wrapper for checking hits that handles errors gracefully."
+  (condition-case-unless-debug err
+      (dead-eye-jump-game-check-hit)  ; Call the original function
+    (error  ; Catch the 'error' signal, which includes all non-fatal errors.
+     (message "Error in dead-eye-jump-game-check-hit: %s" (error-message-string err)))))
 
 (define-derived-mode dead-eye-jump-game-mode fundamental-mode "Dead-Eye-Jump-Game"
   "Major mode for playing the target shooting game."
