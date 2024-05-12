@@ -36,7 +36,7 @@ Press `h`
 Press `u`
 ![4](./assets/4.png)
 
-# Game
+# Training game
 
 To test and play you could run simple shoot target game
 
