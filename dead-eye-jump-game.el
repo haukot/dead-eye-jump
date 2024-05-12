@@ -31,6 +31,21 @@
 (defvar dead-eye-jump-game-timer-seconds 60
   "Timer for the target game to handle game duration. 0 to endless")
 
+(defvar dead-eye-jump-game-on-start-round-fun nil
+  "Function to call when starting a new round.")
+;; (setq dead-eye-jump-game-on-start-round-fun 'dead-eye-jump-game-run-jump)
+;; (setq dead-eye-jump-game-on-start-round-fun
+;;       (lambda ()
+;;         (start-process "game warpd" "*warpd output" "warpd" "--hint2" "--click" "1")
+;;         ))
+;; (setq dead-eye-jump-game-on-start-round-fun nil)
+
+(defun dead-eye-jump-game-run-jump ()
+  (setq dead-eye-jump-show-message nil)
+  (call-interactively 'dead-eye-jump)
+  (dead-eye-jump-game-check-hit)
+  )
+
 ;;* Internals
 (defun dead-eye-jump-game ()
   "Initialize the target shooting game."
@@ -54,10 +69,8 @@
   (move-to-window-line 0)
   (beginning-of-line)
   (dead-eye-jump-game-draw-target)
-  ;; run second automatically. call-interactively alone is not enough?
-  (setq dead-eye-jump-show-message nil)
-  (call-interactively 'dead-eye-jump)
-  (dead-eye-jump-game-check-hit)
+  (when dead-eye-jump-game-on-start-round-fun
+    (funcall dead-eye-jump-game-on-start-round-fun))
   )
 
 (defun dead-eye-jump-game-end ()
@@ -124,6 +137,8 @@
             (next-activation (timer--time dead-eye-jump-game--timer)))
         (floor (- (time-to-seconds next-activation) (time-to-seconds now))))
     0))
+
+(setq debug-on-error t)
 
 (defun dead-eye-jump-game-check-hit ()
   "Check if the cursor is on the target and update the score."
