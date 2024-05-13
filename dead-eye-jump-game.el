@@ -59,7 +59,7 @@
       (cancel-timer dead-eye-jump-game--timer))
     (when (> dead-eye-jump-game-timer-seconds 0)
       (setq dead-eye-jump-game--timer (run-with-timer dead-eye-jump-game-timer-seconds nil 'dead-eye-jump-game-end)))
-    (add-hook 'post-command-hook 'dead-eye-jump-game-check-hit-safe nil t)
+    (add-hook 'post-command-hook 'dead-eye-jump-game-check-hit nil t)
     (message "Game initialized. Score: %d" dead-eye-jump-game--score)))
 
 (defun dead-eye-jump-game-start-round ()
@@ -100,13 +100,13 @@
   (erase-buffer)  ; Clear the buffer first to ensure it's clean.
   (let ((lines (window-body-height)))  ; Get the number of lines in the current window.
     (dotimes (_ lines)
-      (insert (make-string (- (window-body-width) 10) ?\s) "\n"))))
+      (insert (make-string (window-body-width) ?\s) "\n"))))
 
 (defun dead-eye-jump-game-draw-target ()
   "Draw a 5x5 target with different colors at a random position in the buffer."
-  (let* ((max-line (- (max 1 (line-number-at-pos (point-max))) dead-eye-jump-game-target-size))
+  (let* ((max-line (- (max 1 (line-number-at-pos (point-max))) dead-eye-jump-game-target-size 1))
          (line (random max-line))
-         (max-column (- (max 1 (window-body-width)) dead-eye-jump-game-target-size 1))
+         (max-column (- (max 1 (window-body-width)) dead-eye-jump-game-target-size 2))
          (column (random max-column))
          (target-map dead-eye-jump-game-target-template))
     (save-excursion
@@ -116,7 +116,7 @@
       (let ((start (point)))
         (dotimes (i dead-eye-jump-game-target-size)
           (dotimes (j dead-eye-jump-game-target-size)
-            (unless (eobp)  ; Check if at end of buffer before attempting to modify the buffer
+            (unless (or (eobp) (>= (+ (point) 1) (line-end-position)))
               (let ((face (nth j (nth i target-map))))
                 (delete-char 1)
                 (backward-char 1)
@@ -158,14 +158,6 @@
         (message "Hit! You got %d. Score: %d" points dead-eye-jump-game--score))
       (dead-eye-jump-game-start-round)
       (force-mode-line-update))))
-
-;; TODO: is this enough?
-(defun dead-eye-jump-game-check-hit-safe ()
-  "Safe wrapper for checking hits that handles errors gracefully."
-  (condition-case-unless-debug err
-      (dead-eye-jump-game-check-hit)  ; Call the original function
-    (error  ; Catch the 'error' signal, which includes all non-fatal errors.
-     (message "Error in dead-eye-jump-game-check-hit: %s" (error-message-string err)))))
 
 (define-derived-mode dead-eye-jump-game-mode fundamental-mode "Dead-Eye-Jump-Game"
   "Major mode for playing the target shooting game."
