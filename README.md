@@ -4,6 +4,8 @@ This Emacs plugin is similar to Avy, Ace-Jump, or EasyMotion but introduces a me
 With just three keystrokes, you can move to (almost exactly) any desired location on the screen.
 So one location will always correspond to the same keys, making with time navigating simpler as you could mechanically remember places.
 
+Similar idea is implemented in [warpd](https://github.com/rvaiya/warpd/) system wide, it the dead-eye-jump-game could be used to train with it too!
+
 # Usage
 
 Add to config
